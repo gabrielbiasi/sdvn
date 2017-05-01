@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!-- debug config -->
+<launch>
+	<copy file="map.net.xml" />
+	<copy file="map.rou.250.xml" />
+	<copy file="map.sumo.250.cfg" type="config" />
+</launch>
+

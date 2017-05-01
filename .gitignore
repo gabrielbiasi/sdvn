@@ -1,3 +1,7 @@
+#Folders
+out/
+simulations/results
+
 # Compiled Object files
 *.slo
 *.lo

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scave:Analysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:scave="http://www.omnetpp.org/omnetpp/scave">
+  <inputs>
+    <inputs name="/sdvn/simulations/results/Centralized_No_Attack-*.vec"/>
+    <inputs name="/sdvn/simulations/results/Centralized_No_Attack-*.sca"/>
+  </inputs>
+  <datasets>
+    <datasets name="ds">
+      <items xsi:type="scave:Group" name="RTT over time">
+        <items xsi:type="scave:Add" filterPattern="module(*.appl) AND name(RTT)" type="VECTOR"/>
+        <items xsi:type="scave:Apply" operation="aggregator">
+          <params name="function" value="average"/>
+        </items>
+        <items xsi:type="scave:Apply" operation="timewinavg">
+          <params name="windowSize" value="5"/>
+        </items>
+        <items xsi:type="scave:LineChart" name="Average Time-To-Trip over Time" lineNameFormat="Average">
+          <properties name="Y.Axis.Min" value="0.0"/>
+          <properties name="Y.Axis.Max" value="1.0"/>
+          <properties name="Line.Color" value="black"/>
+          <properties name="Line.Name/Average" value="SdvnScenario.vehicle[1].appl timewinavg(aggregator(RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;...))"/>
+        </items>
+      </items>
+      <items xsi:type="scave:Group" name="Packet Rate over time">
+        <items xsi:type="scave:Add" filterPattern="module(*.appl) AND name(&quot;Packet Rate&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Apply" operation="aggregator">
+          <params name="function" value="average"/>
+        </items>
+        <items xsi:type="scave:Apply" operation="timewinavg">
+          <params name="windowSize" value="5"/>
+        </items>
+        <items xsi:type="scave:LineChart" name="Average Packet Rate over Time" lineNameFormat="">
+          <properties name="Y.Axis.Min" value="0.0"/>
+          <properties name="Y.Axis.Max" value="100.0"/>
+          <properties name="Line.Color" value="#008000"/>
+        </items>
+      </items>
+    </datasets>
+  </datasets>
+  <chartSheets>
+    <chartSheets name="default" charts="//@datasets/@datasets.0/@items.1/@items.3 //@datasets/@datasets.0/@items.0/@items.3"/>
+  </chartSheets>
+</scave:Analysis>
