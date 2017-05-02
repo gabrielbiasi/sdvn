@@ -12,7 +12,7 @@
           <params name="function" value="average"/>
         </items>
         <items xsi:type="scave:Apply" operation="timewinavg">
-          <params name="windowSize" value="5"/>
+          <params name="windowSize" value="50"/>
         </items>
         <items xsi:type="scave:LineChart" name="Average Time-To-Trip over Time" lineNameFormat="Average">
           <properties name="Y.Axis.Min" value="0.0"/>

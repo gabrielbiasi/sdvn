@@ -131,7 +131,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
           int packetId = packet->getId();
           int senderId = packet->getSourceAddress();
           std::string s = std::string(packet->getPayload());
-          if(s.find("PING") != -1) {
+          if(s.find("PING") != std::string::npos) {
 
               EV_INFO << "Vehicle [" << vehicleId << "] PING #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
               EV_INFO << "Vehicle [" << vehicleId << "] Sending PONG...\n";
@@ -145,7 +145,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
 
               send(packet, toSwitch);
 
-          } else if(s.find("PONG") != -1) {
+          } else if(s.find("PONG") != std::string::npos) {
               simtime_t latency = simTime()-packet->getTimestamp();
               vLatency.record(latency);
               EV_INFO << "Vehicle [" << vehicleId << "] PONG #"<< packetId <<" received from Vehicle [" << senderId << "]\n";

@@ -27,7 +27,7 @@
           <params name="windowSize" value="50"/>
         </items>
         <items xsi:type="scave:LineChart" name="Average Time-To-Trip over Time" lineNameFormat="">
-          <properties name="Y.Axis.Max" value="5.0"/>
+          <properties name="Y.Axis.Max" value="1.0"/>
         </items>
       </items>
     </datasets>
