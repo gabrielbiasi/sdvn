@@ -37,7 +37,7 @@ void SdvnPing::initialize(int stage) {
         fromSwitch = findGate("fromSwitch");
 
         vehicleId = getParentModule()->getIndex();
-        packetInterval = par("packetInterval").longValue();
+        packetInterval = par("packetInterval").doubleValue();
         warmUp = par("warmUp").doubleValue();
 
         msgSent = 0;
@@ -52,14 +52,14 @@ void SdvnPing::initialize(int stage) {
         messagesEvent = new cMessage("Send", 0);
         scheduleAt(simTime() + warmUp + uniform(0, 1), messagesEvent);
 
-        attacker = attackMode != 0 && uniform(0,1) < attackerRate;
         attacking = false;
+        attacker = attackMode != 0 && uniform(0,1) < attackerRate;
         if (attacker) {
             attackEvent = new cMessage("Attack", 1);
             if (simTime() < startTime) {
                 scheduleAt(startTime, attackEvent);
             } else if (simTime() > startTime && simTime() < startTime + duration) {
-                scheduleAt(simTime()+0.001, attackEvent);
+                scheduleAt(simTime()+0.0001, attackEvent);
             } else {
                 delete attackEvent;
             }
@@ -127,25 +127,27 @@ void SdvnPing::handleMessage(cMessage *msg) {
                    break;
            }
        } else if (msg->getArrivalGateId() == fromSwitch) {
-          AppMessage* packet = (AppMessage*) msg;
-          int packetId = packet->getId();
-          int senderId = packet->getSourceAddress();
-          std::string s = std::string(packet->getPayload());
-          if(s.find("PING") != std::string::npos) {
+           // Message received from switch.
+           AppMessage* packet = (AppMessage*) msg;
+           int packetId = packet->getId();
+           int senderId = packet->getSourceAddress();
+           std::string s = std::string(packet->getPayload());
+           if(s.find("PING") != std::string::npos) {
+               // PING received from a vehicle. Sending PONG.
+               EV_INFO << "Vehicle [" << vehicleId << "] PING #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
+               EV_INFO << "Vehicle [" << vehicleId << "] Sending PONG...\n";
 
-              EV_INFO << "Vehicle [" << vehicleId << "] PING #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
-              EV_INFO << "Vehicle [" << vehicleId << "] Sending PONG...\n";
+               packet->setSourceAddress(vehicleId);
+               packet->setDestinationAddress(senderId);
+               packet->setTTL(64);
 
-              packet->setSourceAddress(vehicleId);
-              packet->setDestinationAddress(senderId);
-              packet->setTTL(64);
+                s.replace(0, 4, "PONG");
+                packet->setPayload(s.c_str());
 
-              s.replace(0, 4, "PONG");
-              packet->setPayload(s.c_str());
-
-              send(packet, toSwitch);
+                send(packet, toSwitch);
 
           } else if(s.find("PONG") != std::string::npos) {
+              // PONG received from a vehicle. Registering statistics.
               simtime_t latency = simTime()-packet->getTimestamp();
               vLatency.record(latency);
               EV_INFO << "Vehicle [" << vehicleId << "] PONG #"<< packetId <<" received from Vehicle [" << senderId << "]\n";

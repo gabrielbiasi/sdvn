@@ -32,7 +32,7 @@ using Veins::AnnotationManager;
 using std::vector;
 
 /**
- * Software Defined Vehicular Network App
+ * Software Defined Vehicular Network Switch
  */
 class SdvnSwitch : public BaseWaveApplLayer {
     public:

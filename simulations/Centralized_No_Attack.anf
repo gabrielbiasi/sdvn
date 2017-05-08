@@ -12,11 +12,10 @@
           <params name="function" value="average"/>
         </items>
         <items xsi:type="scave:Apply" operation="timewinavg">
-          <params name="windowSize" value="50"/>
+          <params name="windowSize" value="5"/>
         </items>
-        <items xsi:type="scave:LineChart" name="Average Time-To-Trip over Time" lineNameFormat="Average">
+        <items xsi:type="scave:LineChart" name="Average Round-Trip Time" lineNameFormat="Average">
           <properties name="Y.Axis.Min" value="0.0"/>
-          <properties name="Y.Axis.Max" value="1.0"/>
           <properties name="Line.Color" value="black"/>
           <properties name="Line.Name/Average" value="SdvnScenario.vehicle[1].appl timewinavg(aggregator(RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;RTT;...))"/>
         </items>

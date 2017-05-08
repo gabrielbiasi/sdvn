@@ -154,7 +154,7 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
             return;
         }
         EV_INFO << "Vehicle [" << myId << "] Checking Flow Table...\n";
-        // Consulta na Flow Table
+        // Checking Flow Table
         for(auto &cm : flowTable) {
             if(packet->getDestinationAddress() == cm->getDestinationAddress()) { // Flow Match
                 EV_INFO << "Vehicle [" << myId << "] MATCH: ";
@@ -209,9 +209,7 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
             delete packet;
             return;
         } else {
-            // O PACKET_IN é criado e o pacote é colocado no buffer até receber uma
-            // FLOW_MOD do controlador que trate este pacote.
-
+            // The PACKET_IN is sent and the packet and their similar are store in the buffer
             for(auto &p : packetInBuffer) {
                 if(p->getDestinationAddress() == packet->getDestinationAddress()) {
                     EV_INFO << "Vehicle [" << myId << "] Similar packet found on Packet In Buffer, just buffering.\n";
@@ -257,7 +255,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
         sendLte(nm);
         scheduleAt(simTime() + controllerBeaconsInterval, controllerBeaconEvent);
 
-        if(!isVehicle()) addRsuNeighbors(); // Adiciona os vizinhos RSUs automaticamente
+        if(!isVehicle()) addRsuNeighbors(); // adds the neighbors RSUs
 
 
     } else if(msg->getKind() == 013) {
@@ -320,7 +318,7 @@ void SdvnSwitch::onLte(ControllerMessage* msg) {
             }
         }
 
-        // Send all the selected packets to the network layer
+        // Send all the selected packets to the L3 layer
         for(auto &packet : selected) onData(packet);
 
     } else {
@@ -344,7 +342,7 @@ void SdvnSwitch::onApplication(AppMessage* msg) {
     wsm->setWsmVersion(1);
     wsm->setTimestamp(simTime());
     wsm->setSenderAddress(myId);
-    wsm->setRecipientAddress(myId); // Para simular a chegada do pacote na camada de rede
+    wsm->setRecipientAddress(myId); // simulates the packet arriving on the L3
     wsm->setSenderPos(curPosition);
     wsm->setSerial(0);
 
