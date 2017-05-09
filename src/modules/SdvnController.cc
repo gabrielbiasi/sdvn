@@ -114,7 +114,7 @@ ControllerMessage* SdvnController::prepareNewFlowMod(cMessage* message) {
     flow->setSourceVehicle(vehicle);
     flow->setDestinationAddress(destination);
 
-    if(simTime() < timestamps[vehicle] + dropAfter) { // Check if vehicle still sending neighbor messages
+    if(simTime() < timestamps[destination] + dropAfter) { // Check if vehicle still sending neighbor messages
         flowDestination = runSimpleDijkstra(vehicle, destination);
         flow->setFlowAction(flowDestination != -1 ? FORWARD : WAIT);
         flow->setFlowId(flowDestination);
