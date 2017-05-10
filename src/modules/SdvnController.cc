@@ -2,10 +2,9 @@
 
 Define_Module(SdvnController);
 
+using std::map;
 using std::vector;
 using std::stringstream;
-
-#include <stdio.h>
 
 void SdvnController::initialize(int stage) {
     if (stage == 0) {
@@ -21,8 +20,8 @@ void SdvnController::initialize(int stage) {
         fromLteBase = findGate("fromLteBase");
 
         // Adjacency matrix
-        graph = std::map<int, int*>();
-        timestamps = std::map<int, simtime_t>();
+        graph = map<int, vector<int>>();
+        timestamps = map<int, simtime_t>();
 
         prefixRsuId = 10000;
     }
@@ -30,16 +29,15 @@ void SdvnController::initialize(int stage) {
 
 int SdvnController::runSimpleDijkstra(int source, int destination) {
 
-     // Inicia os mapas com distâncias infinitas para
-     // executar o Dijkstra.
+     // Start all distances with infinite
 
-     std::vector<int> listV = std::vector<int>();
-     std::map<int,int> dist = std::map<int,int>();
-     std::map<int,int> prev = std::map<int,int>();
+     vector<int> listV = vector<int>();
+     map<int,int> dist = map<int,int>();
+     map<int,int> prev = map<int,int>();
 
      auto j = graph.begin();
      for(j = graph.begin(); j != graph.end(); j++) {
-         dist[(*j).first] = 9999;
+         dist[(*j).first] = INT_MAX;
          prev[(*j).first] = -1;
          listV.push_back((*j).first);
      }
@@ -60,10 +58,10 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
                  j = i;
              }
          }
-         if(shortV == -1) { // Desconexo: (envia para o RSU ou aguarde um RSU)
+         if(shortV == -1) { // disconnected: (send to RSU or standby)
              int target = -1;
              if(source != prefixRsuId) {
-                 for(int i = 1; i < graph[source][0]+1; i++) { // Vehicle to RSU
+                 for(int i = 0; i < graph[source].size(); i++) { // Vehicle to RSU
                      int neighbor = graph[source][i];
                      if(neighbor >= prefixRsuId) { // RSU found!
                          target = neighbor;
@@ -74,22 +72,22 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
              if(target != -1) {
                  EV_INFO << "SDVN Controller: NOT FOUND, forward to RSU: [" << target << "]\n";
              } else {
-                 EV_INFO << "SDVN Controller: WAIT! \n";
+                 EV_INFO << "SDVN Controller: STANDBY! \n";
              }
-             return target; // Retorna o vizinho que possui mais conexões!
+             return target; // Return RSU or -1 to standby
 
-         } else if(shortV == destination) { // Alvo!
+         } else if(shortV == destination) { // target
              int target = destination;
              while(prev[target] != source) target = prev[target];
              EV_INFO << "SDVN Controller: FOUND!, forward to most closer: [" << target << "]\n";
-             return target; // Retorna o pulo mais próximo!
+             return target; // Return to the next hop!
          }
 
-         // Remove do vetor
+         // Remove from vector
          listV.erase(j);
 
-         // Processo simples de menor caminho
-         for(int i = 1; i < graph[shortV][0]+1; i++) { // graph[shortV][0] --> tamanho do vetor
+         // Simple process for shortest path
+         for(int i = 0; i < graph[shortV].size(); i++) {
              int neighbor = graph[shortV][i];
              if(dist[shortV]+1 < dist[neighbor]) {
                  dist[neighbor] = dist[shortV]+1;
@@ -131,17 +129,16 @@ ControllerMessage* SdvnController::prepareNewFlowMod(cMessage* message) {
 
 void SdvnController::updateNetworkGraph(cMessage* message) {
     NeighborMessage* m = (NeighborMessage*) message;
+    vector<int> new_neighbors;
     int vehicle = m->getSourceVehicle();
-    int* p = graph[vehicle]; // Captura o ponteiro
-    graph.erase(vehicle); // Remove do map
-    delete p; // free memory
+    if(graph.find(vehicle) != graph.end()) graph.erase(vehicle);
 
-    int* new_neighbors = new int[m->getNeighborsArraySize()];
+    new_neighbors = vector<int>();
     for(unsigned int i = 0; i < m->getNeighborsArraySize(); i++) {
-        new_neighbors[i] = m->getNeighbors(i); // Coloca os novos vizinhos
+        new_neighbors.push_back(m->getNeighbors(i)); // put the neighbors in the new vector
     }
     graph[vehicle] = new_neighbors;
-    timestamps[vehicle] = m->getTimestamp(); // talvez aqui
+    timestamps[vehicle] = m->getTimestamp();
 }
 
 
@@ -166,7 +163,7 @@ void SdvnController::handleMessage(cMessage *msg) {
     } else if(msg->isSelfMessage()) {
         EV_INFO << "CONTROLADOR: Self Message\n";
     } else {
-        EV_INFO << "CONTROLADOR: Algo errado no controlador!\n";
+        EV_INFO << "CONTROLADOR: Something wrong here!\n";
     }
 }
 
@@ -176,6 +173,6 @@ void SdvnController::sendLte(cMessage* msg) {
 
 void SdvnController::finish() {
     cSimpleModule::finish();
-    for(auto &j : graph) delete j.second; // free neighbors lists
+    for(auto &j : graph) j.second.clear(); // free neighbors lists
     graph.clear();
 }

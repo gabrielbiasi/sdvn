@@ -241,13 +241,10 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
         nm->setSourceVehicle(myId);
         nm->setTimestamp(simTime());
 
-        // workaround: the first position is the vector size.
-        nm->setNeighborsArraySize(currentNeighbors.size()+1);
-        nm->setNeighbors(0, currentNeighbors.size());
-
-        for(unsigned int i=1; i < currentNeighbors.size()+1; i++) {
-            nm->setNeighbors(i, currentNeighbors[i-1]);
-            EV_INFO << currentNeighbors[i-1] << ",";
+        nm->setNeighborsArraySize(currentNeighbors.size());
+        for(unsigned int i=0; i < currentNeighbors.size(); i++) {
+            nm->setNeighbors(i, currentNeighbors[i]);
+            EV_INFO << currentNeighbors[i] << ",";
         }
         EV_INFO << "]\n";
 

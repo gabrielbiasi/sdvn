@@ -22,8 +22,8 @@ protected:
     int fromLteBase;
 
     bool debug;
-    std::map<int, int*> graph;
-    std::map<int, simtime_t> timestamps;
+    map<int, vector<int>> graph;
+    map<int, simtime_t> timestamps;
 
     double hardTimeout;
     double idleTimeout;
