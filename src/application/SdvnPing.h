@@ -17,9 +17,9 @@
 #define __SDVN_SDVNPING_H_
 
 #include <omnetpp.h>
+#include "SdvnTypes.h"
 
 using namespace omnetpp;
-
 
 class SdvnPing : public cSimpleModule
 {
@@ -40,13 +40,6 @@ class SdvnPing : public cSimpleModule
 
     cMessage* messagesEvent;
     cMessage* attackEvent;
-
-    enum Attacks {
-        NO_ATTACK = 0,
-        A_BLACK_HOLE = 1,
-        A_DDOS = 2,
-        A_OVERFLOW = 3
-    };
 
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);

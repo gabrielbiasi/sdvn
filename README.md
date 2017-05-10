@@ -9,3 +9,6 @@ Some security attacks were implemented in order to evaluate their impact in the 
 
 ## Run
 Run with cmdenv or Qtenv and select the config mode.
+
+## TODO
+- Distributed Approach (without LTE but mini-controllers on RSUs)

@@ -19,6 +19,8 @@
 #include "veins/modules/mobility/traci/TraCIMobility.h"
 #include "veins/modules/mobility/traci/TraCICommandInterface.h"
 
+#include "SdvnTypes.h"
+
 #include "messages/AppMessage_m.h"
 #include "messages/ControllerMessage_m.h"
 #include "messages/NeighborMessage_m.h"
@@ -83,23 +85,6 @@ class SdvnSwitch : public BaseWaveApplLayer {
 
         SdvnPing* appl;
 
-        enum MESSAGETYPES {
-            PACKET_IN = 0,
-            FLOW_MOD = 1
-        };
-
-        enum ACTIONS {
-            FORWARD = 0,
-            DROP = 1,
-            STANDBY = 2
-        };
-
-        enum ATTACKS {
-            NO_ATTACK = 0,
-            A_BLACK_HOLE = 1,
-            A_DDOS = 2,
-            A_OVERFLOW = 3
-        };
     protected:
         virtual void handleMessage(cMessage* msg);
 

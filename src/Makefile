@@ -151,6 +151,7 @@ depend:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/application/SdvnPing.o: application/SdvnPing.cc \
+	SdvnTypes.h \
 	application/SdvnPing.h \
 	messages/AppMessage_m.h \
 	$(VEINS_PROJ)/src/veins/base/utils/Coord.h \
@@ -189,6 +190,7 @@ $O/modules/LteBase.o: modules/LteBase.cc \
 	$(VEINS_PROJ)/src/veins/modules/obstacle/ObstacleControl.h \
 	$(VEINS_PROJ)/src/veins/modules/world/annotations/AnnotationManager.h
 $O/modules/SdvnController.o: modules/SdvnController.cc \
+	SdvnTypes.h \
 	messages/ControllerMessage_m.h \
 	messages/NeighborMessage_m.h \
 	modules/SdvnController.h \
@@ -217,6 +219,7 @@ $O/modules/SdvnController.o: modules/SdvnController.cc \
 	$(VEINS_PROJ)/src/veins/modules/obstacle/ObstacleControl.h \
 	$(VEINS_PROJ)/src/veins/modules/world/annotations/AnnotationManager.h
 $O/modules/SdvnSwitch.o: modules/SdvnSwitch.cc \
+	SdvnTypes.h \
 	application/SdvnPing.h \
 	messages/AppMessage_m.h \
 	messages/ControllerMessage_m.h \
