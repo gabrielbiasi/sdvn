@@ -51,9 +51,9 @@ class SdvnSwitch : public BaseWaveApplLayer {
         std::vector<AppMessage*> packetInBuffer;
         int maxPacketInBuffer;
 
-        std::vector<AppMessage*> packetWaitBuffer;
-        int maxPacketWaitBuffer;
-        double waitBufferTime;
+        std::vector<AppMessage*> packetStandbyBuffer;
+        int maxPacketStandbyBuffer;
+        double standbyTime;
 
         double controllerBeaconsInterval;
         cMessage* controllerBeaconEvent;
@@ -78,23 +78,23 @@ class SdvnSwitch : public BaseWaveApplLayer {
         int droppedRule;
         int droppedByTTL;
         int droppedByRule;
-        int droppedByWaitOverflow;
+        int droppedByStandbyOverflow;
         int droppedByInOverflow;
 
         SdvnPing* appl;
 
-        enum MessageTypes {
+        enum MESSAGETYPES {
             PACKET_IN = 0,
             FLOW_MOD = 1
         };
 
-        enum Actions {
+        enum ACTIONS {
             FORWARD = 0,
             DROP = 1,
-            WAIT = 2
+            STANDBY = 2
         };
 
-        enum Attacks {
+        enum ATTACKS {
             NO_ATTACK = 0,
             A_BLACK_HOLE = 1,
             A_DDOS = 2,

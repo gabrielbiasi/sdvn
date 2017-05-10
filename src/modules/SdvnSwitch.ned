@@ -25,10 +25,10 @@ simple SdvnSwitch extends BaseWaveApplLayer {
 		int prefixRsuId = default(10000);
 		
 		double controllerBeaconsInterval = default(1s) @unit(s);
-		double waitBufferTime = default(5s) @unit(s);
+		double standbyTime = default(5s) @unit(s);
 		
 		int maxPacketInBuffer = default(1000);
-		int maxPacketWaitBuffer = default(1000);
+		int maxPacketStandbyBuffer = default(1000);
 		int maxFlowRules = default(50);
 		 
     gates:

@@ -46,10 +46,10 @@ void SdvnSwitch::initialize(int stage) {
         dataPriority = par("dataPriority").longValue();
 
         maxPacketInBuffer = par("maxPacketInBuffer").longValue();
-        maxPacketWaitBuffer = par("maxPacketWaitBuffer").longValue();
+        maxPacketStandbyBuffer = par("maxPacketStandbyBuffer").longValue();
         maxFlowRules = par("maxFlowRules").longValue();
 
-        waitBufferTime = par("waitBufferTime").doubleValue();
+        standbyTime = par("standbyTime").doubleValue();
 
         fromApp = findGate("fromApp");
         toApp = findGate("toApp");
@@ -70,12 +70,12 @@ void SdvnSwitch::initialize(int stage) {
         currentNeighbors = std::vector<int>();
         flowTable = std::vector<ControllerMessage*>();
         packetInBuffer = std::vector<AppMessage*>();
-        packetWaitBuffer = std::vector<AppMessage*>();
+        packetStandbyBuffer = std::vector<AppMessage*>();
 
         droppedRule = 0;
         droppedByTTL = 0;
         droppedByRule = 0;
-        droppedByWaitOverflow = 0;
+        droppedByStandbyOverflow = 0;
         droppedByInOverflow = 0;
         WATCH(myId);
     }
@@ -177,18 +177,18 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
                             sendWSM(wsm);
                         }
                         return;
-                    case WAIT:
+                    case STANDBY:
                         EV_INFO << "WAIT! Buffering message.\n";
-                        if(packetWaitBuffer.size() >= ((unsigned) maxPacketWaitBuffer)) {
+                        if(packetStandbyBuffer.size() >= ((unsigned) maxPacketStandbyBuffer)) {
                             EV_INFO << "Vehicle [" << myId << "] Wait Buffer Overflow! Dropping packet.\n";
-                            droppedByWaitOverflow++;
+                            droppedByStandbyOverflow++;
                             delete packet;
                             return;
                         } else {
-                            packetWaitBuffer.push_back(packet);
-                            EV_INFO << "Vehicle [" << myId << "] Wait Buffer now: [" << packetWaitBuffer.size() << "]\n";
+                            packetStandbyBuffer.push_back(packet);
+                            EV_INFO << "Vehicle [" << myId << "] Wait Buffer now: [" << packetStandbyBuffer.size() << "]\n";
                             cMessage* check = new cMessage("Check Wait Buffer", 013);
-                            scheduleAt(simTime() + waitBufferTime, check);
+                            scheduleAt(simTime() + standbyTime, check);
                         }
                         return;
                     case DROP:
@@ -257,14 +257,14 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 
     } else if(msg->getKind() == 013) {
         delete msg;
-        EV_INFO << "Vehicle [" << myId << "] Recovering packet on Wait Buffer!";
+        EV_INFO << "Vehicle [" << myId << "] Recovering packet on Standby Buffer!";
 
-        AppMessage* packet = *(packetWaitBuffer.begin());
-        packetWaitBuffer.erase(packetWaitBuffer.begin());
+        AppMessage* packet = *(packetStandbyBuffer.begin());
+        packetStandbyBuffer.erase(packetStandbyBuffer.begin());
 
         onData(packet);
 
-        EV_INFO << "Packet on Wait Buffer yet: " << packetWaitBuffer.size() << " \n";
+        EV_INFO << "Packet on Standby Buffer yet: " << packetStandbyBuffer.size() << " \n";
     } else {
         BaseWaveApplLayer::handleSelfMsg(msg);
     }
@@ -289,8 +289,8 @@ void SdvnSwitch::onLte(ControllerMessage* msg) {
 
         if(msg->getFlowAction() == FORWARD) {
             EV_INFO << "Vehicle [" << myId << "] ControllerMessage FORWARD to ["<< msg->getFlowId() << "]!\n";
-        } else if(msg->getFlowAction() == WAIT) {
-            EV_INFO << "Vehicle [" << myId << "] ControllerMessage WAIT!\n";
+        } else if(msg->getFlowAction() == STANDBY) {
+            EV_INFO << "Vehicle [" << myId << "] ControllerMessage STANDBY!\n";
         } else {
             EV_INFO << "Vehicle [" << myId << "] ControllerMessage DROP!\n";
         }
@@ -460,20 +460,19 @@ void SdvnSwitch::finish() {
     recordScalar("Flow Rules Dropped", droppedRule);
     recordScalar("Dropped by TTL", droppedByTTL);
     recordScalar("Dropped by Rule", droppedByRule);
-    recordScalar("Dropped by Wait Overflow", droppedByWaitOverflow);
+    recordScalar("Dropped by Standby Overflow", droppedByStandbyOverflow);
     recordScalar("Dropped by Packet In Overflow", droppedByInOverflow);
-    recordScalar("Wait Buffer Size", packetWaitBuffer.size());
+    recordScalar("Standby Buffer Size", packetStandbyBuffer.size());
     recordScalar("Packet In Buffer Size", packetInBuffer.size());
 
-    /* Cancela o evento de beacons para o controlador */
     if(controllerBeaconEvent->isScheduled()) {
         cancelAndDelete(controllerBeaconEvent);
     } else {
         delete controllerBeaconEvent;
     }
 
-    for(auto &packet : packetWaitBuffer) delete packet; // free packets still in buffer
-    packetWaitBuffer.clear();
+    for(auto &packet : packetStandbyBuffer) delete packet; // free packets still in buffer
+    packetStandbyBuffer.clear();
     for(auto &packet : packetInBuffer) delete packet; // free packets still in buffer
     packetInBuffer.clear();
     for(auto &flow : flowTable) delete flow; // free flows still in table
