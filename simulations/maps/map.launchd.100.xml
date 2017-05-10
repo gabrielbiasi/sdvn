@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<!-- debug config -->
 <launch>
+	<basedir path="C:\omnetpp-5.0\workspace\sdvn\simulations\maps"/>
 	<copy file="map.net.xml" />
 	<copy file="map.rou.100.xml" />
 	<copy file="map.sumo.100.cfg" type="config" />

@@ -45,6 +45,6 @@ network SdvnScenario extends Scenario
                 @display("p=1200,700;b=9,10,oval;i=device/antennatower");
         }
     connections:
-        base.toController --> EthernetLine --> controller.fromLteBase;
-        base.fromController <-- EthernetLine <--  controller.toLteBase;
+        base.toController --> EthernetLine --> controller.inControl;
+        base.fromController <-- EthernetLine <--  controller.outControl;
 }

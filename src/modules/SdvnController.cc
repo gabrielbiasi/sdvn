@@ -16,8 +16,8 @@ void SdvnController::initialize(int stage) {
         dropAfter = par("dropAfter").doubleValue();
 
         // Gates
-        toLteBase = findGate("toLteBase");
-        fromLteBase = findGate("fromLteBase");
+        inControl = findGate("inControl");
+        outControl = findGate("outControl");
 
         // Adjacency matrix
         graph = map<int, vector<int>>();
@@ -144,7 +144,7 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
 
 void SdvnController::handleMessage(cMessage *msg) {
 
-    if(msg->getArrivalGateId() == fromLteBase) {
+    if(msg->getArrivalGateId() == inControl) {
         if(msg->getKind() == 011) { // 011 -> Neighbor Message
             //EV_INFO << "SDVN Controller: Neighbor Update Received\n";
             updateNetworkGraph(msg);
@@ -155,7 +155,7 @@ void SdvnController::handleMessage(cMessage *msg) {
         if(msg->getKind() == 012) { // 012 -> Controller Message
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< ((ControllerMessage*) msg)->getSourceVehicle() << "]\n";
             ControllerMessage* flow_mod = prepareNewFlowMod(msg);
-            sendLte(flow_mod);
+            sendController(flow_mod);
             delete msg;
             return;
         }
@@ -167,8 +167,15 @@ void SdvnController::handleMessage(cMessage *msg) {
     }
 }
 
-void SdvnController::sendLte(cMessage* msg) {
-    send(msg, toLteBase);
+vector<int>* SdvnController::getNodesId() {
+    vector<int>* result;
+    result = new vector<int>();
+    for(auto node : graph) result->push_back(node.first);
+    return result;
+}
+
+void SdvnController::sendController(cMessage* msg) {
+    send(msg, outControl);
 }
 
 void SdvnController::finish() {

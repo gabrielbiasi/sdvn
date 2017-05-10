@@ -18,8 +18,8 @@ class SdvnController : public cSimpleModule {
 
 protected:
     // Gates
-    int toLteBase;
-    int fromLteBase;
+    int inControl;
+    int outControl;
 
     bool debug;
     map<int, vector<int>> graph;
@@ -49,15 +49,17 @@ protected:
         A_OVERFLOW = 3
     };
 
-protected:
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);
     virtual void finish();
 
+    void sendController(cMessage* msg);
     void updateNetworkGraph(cMessage* message);
     ControllerMessage* prepareNewFlowMod(cMessage* message);
     int runSimpleDijkstra(int source, int destination);
-    void sendLte(cMessage* msg);
+
+public:
+    vector<int>* getNodesId();
 };
 
 #endif

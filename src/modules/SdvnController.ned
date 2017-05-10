@@ -23,6 +23,6 @@ simple SdvnController {
 		double idleTimeout = default(5s)  @unit(s);
         
     gates:
-        input fromLteBase;
-        output toLteBase;
+        input inControl;
+        output outControl;
 }
