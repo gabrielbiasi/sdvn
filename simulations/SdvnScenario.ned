@@ -17,14 +17,15 @@ package sdvn.simulations;
 
 import sdvn.modules.SdvnController;
 import sdvn.modules.LteBase;
-import sdvn.nodes.RSU;
+import sdvn.nodes.RSU_C;
 import org.car2x.veins.nodes.Scenario;
 import ned.DatarateChannel;
 
 network SdvnScenario extends Scenario
 {	    
     parameters:
-        int numRsu = default(4);
+        int numRsu       = default(4);
+        int architecture = default(0);
     	@display("bgb=1050,1050;bgi=background/map,s");
 	types:
         channel EthernetLine extends DatarateChannel {
@@ -32,7 +33,7 @@ network SdvnScenario extends Scenario
             datarate = 1000Mbps;
         }
     submodules:
-        rsu[numRsu]: RSU {
+        rsu[numRsu]: RSU_C {
             parameters:
                 @display("i=device/antennatower;is=n");
         }

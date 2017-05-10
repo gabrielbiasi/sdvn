@@ -4,11 +4,11 @@ import org.car2x.veins.base.modules.*;
 import org.car2x.veins.modules.nic.Nic80211p;
 import sdvn.modules.SdvnSwitch;
 
-module RSU
+module RSU_C
 {
     parameters:
-        string nicType = default("Nic80211p");
-        double rsuDelay = default(50ns) @unit(ns);
+        string nicType      = default("Nic80211p");
+        double rsuDelay     = default(0.01s) @unit(s);
     gates:
         input veinsradioIn;
     submodules:

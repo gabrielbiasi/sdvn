@@ -25,6 +25,7 @@ void SdvnSwitch::initialize(int stage) {
         annotations = AnnotationManagerAccess().getIfExists();
         ASSERT(annotations);
 
+        architecture = getSystemModule()->par("architecture").longValue();
         prefixRsuId = par("prefixRsuId").longValue();
 
         type = par("type").stdstringValue();

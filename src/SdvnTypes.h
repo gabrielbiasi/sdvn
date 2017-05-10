@@ -6,6 +6,11 @@ enum MESSAGETYPES {
     FLOW_MOD = 1
 };
 
+enum ARCHITECTURE {
+    CENTRALIZED = 0,
+    DISTRIBUTED = 1
+};
+
 enum ACTIONS {
     FORWARD = 0,
     DROP = 1,

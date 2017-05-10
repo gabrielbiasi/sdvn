@@ -24,7 +24,6 @@
 #include "messages/AppMessage_m.h"
 #include "messages/ControllerMessage_m.h"
 #include "messages/NeighborMessage_m.h"
-
 #include "application/SdvnPing.h"
 
 using Veins::TraCIMobility;
@@ -68,13 +67,17 @@ class SdvnSwitch : public BaseWaveApplLayer {
         int fromApp;
         int toApp;
 
-        // Lte Gates
+        // Controller Gates
         int fromLteBase;
         int toLteBase;
 
         // RSU Gates
         int fromRsu;
         int toRsu;
+
+        // mini-controller for Distributed Mode
+        int architecture;
+
 
         // Scalars
         int droppedRule;
