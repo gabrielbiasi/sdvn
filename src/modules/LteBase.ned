@@ -21,6 +21,7 @@ simple LteBase {
 		bool   debug = default(false);
 		double lteDelay = default(0.1s) @unit(s);
 		double power = default(0);
+		int    prefixRsuId = default(10000);
 		
     gates:
         input  radioIn @directIn;

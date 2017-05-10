@@ -34,8 +34,8 @@ void SdvnSwitch::initialize(int stage) {
             traciVehicle = mobility->getVehicleCommandInterface();
 
             std::stringstream ss;
-            ss << "SdvnScenario.vehicle[" << myId << "].appl";
-            appl = (SdvnPing*) getModuleByPath(ss.str().c_str());
+            ss << ".vehicle[" << myId << "].appl";
+            appl = (SdvnPing*) getSystemModule()->getModuleByPath(ss.str().c_str());
         } else {
             appl = nullptr;
             BaseMobility* mobi = (BaseMobility*) getParentModule()->getSubmodule("mobility");
@@ -386,21 +386,21 @@ void SdvnSwitch::sendApplication(AppMessage* msg)  {
 }
 
 void SdvnSwitch::sendLte(cMessage* msg)  {
-    cModule* lteBase = getModuleByPath("SdvnScenario.base");
+    cModule* lteBase = getSystemModule()->getModuleByPath(".base");
     double lteDelay = lteBase->par("lteDelay").doubleValue();
     cSimpleModule::sendDirect(msg, lteDelay, 0, lteBase, "radioIn");
 }
 
 void SdvnSwitch::sendRSU(WaveShortMessage* msg) {
     std::stringstream ss;
-    ss << "SdvnScenario.rsu[" << (msg->getRecipientAddress()-prefixRsuId) << "].switcher";
-    cModule* rsu = getModuleByPath(ss.str().c_str());
+    ss << ".rsu[" << (msg->getRecipientAddress()-prefixRsuId) << "].switcher";
+    cModule* rsu = getSystemModule()->getModuleByPath(ss.str().c_str());
     double rsuDelay = rsu->getParentModule()->par("rsuDelay").doubleValue();
     cSimpleModule::sendDirect(msg, rsuDelay, 0, rsu, "fromRsu");
 }
 
 void SdvnSwitch::addRsuNeighbors() {
-    int num = getModuleByPath("SdvnScenario")->par("numRsu").longValue();
+    int num = getSystemModule()->par("numRsu").longValue();
     for(int i = 0; i < num; i++) {
         currentNeighbors.push_back(prefixRsuId + i);
     }

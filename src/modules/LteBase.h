@@ -16,6 +16,7 @@ protected:
     bool debug;
     double power;
     double lteDelay;
+    long prefixRsuId;
 
 protected:
     virtual void initialize(int stage);

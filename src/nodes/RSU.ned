@@ -8,7 +8,7 @@ module RSU
 {
     parameters:
         string nicType = default("Nic80211p");
-        double rsuDelay = default(0.1s) @unit(s);
+        double rsuDelay = default(50ns) @unit(ns);
     gates:
         input veinsradioIn;
     submodules:

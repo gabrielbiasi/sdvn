@@ -20,14 +20,6 @@ Define_Module(SdvnPing);
 
 void SdvnPing::initialize(int stage) {
     if (stage == 0) {
-        if(hasGUI()) {
-            getModuleByPath("SdvnScenario.manager")->setDisplayString("p=1200,100;i=block/network2;is=s");
-            getModuleByPath("SdvnScenario.obstacles")->setDisplayString("p=1400,100;i=misc/town;is=s");
-            getModuleByPath("SdvnScenario.annotations")->setDisplayString("p=1200,200;i=msg/paperclip;is=s");
-            getModuleByPath("SdvnScenario.world")->setDisplayString("p=1400,200;i=misc/globe;is=s");
-            getModuleByPath("SdvnScenario.connectionManager")->setDisplayString("p=1200,300;i=abstract/multicast;is=s");
-        }
-
         attackMode = par("attackMode").longValue();
         attackerRate = par("attackerRate").doubleValue();
         startTime = par("startTime").doubleValue();
@@ -81,8 +73,8 @@ void SdvnPing::handleMessage(cMessage *msg) {
                    if(destinationId < 0) return;
 
                    // Check if vehicle is in the simulation
-                   ss << "SdvnScenario.vehicle[" << destinationId << "].appl";
-                   module = getModuleByPath(ss.str().c_str());
+                   ss << ".vehicle[" << destinationId << "].appl";
+                   module = getSystemModule()->getModuleByPath(ss.str().c_str());
                    if(!module) return;
 
                    // checks if perform DDoS attack or not

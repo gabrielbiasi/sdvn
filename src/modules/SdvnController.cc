@@ -8,6 +8,15 @@ using std::stringstream;
 
 void SdvnController::initialize(int stage) {
     if (stage == 0) {
+        if(hasGUI()) {
+            cModule* sys = getSystemModule();
+            sys->getModuleByPath(".manager")->setDisplayString("p=1200,100;i=block/network2;is=s");
+            sys->getModuleByPath(".obstacles")->setDisplayString("p=1400,100;i=misc/town;is=s");
+            sys->getModuleByPath(".annotations")->setDisplayString("p=1200,200;i=msg/paperclip;is=s");
+            sys->getModuleByPath(".world")->setDisplayString("p=1400,200;i=misc/globe;is=s");
+            sys->getModuleByPath(".connectionManager")->setDisplayString("p=1200,300;i=abstract/multicast;is=s");
+        }
+
         debug = par("debug").boolValue();
 
         // Timeouts
