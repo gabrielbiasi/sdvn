@@ -163,7 +163,7 @@ inline std::ostream& operator<<(std::ostream& out, const std::vector<T,A>& vec)
 
 Register_Class(ControllerMessage);
 
-ControllerMessage::ControllerMessage(const char *name, int kind) : ::omnetpp::cMessage(name,kind)
+ControllerMessage::ControllerMessage(const char *name, int kind) : ::WaveShortMessage(name,kind)
 {
     this->sourceVehicle = 0;
     this->messageType = 0;
@@ -176,7 +176,7 @@ ControllerMessage::ControllerMessage(const char *name, int kind) : ::omnetpp::cM
     this->destinationAddress = 0;
 }
 
-ControllerMessage::ControllerMessage(const ControllerMessage& other) : ::omnetpp::cMessage(other)
+ControllerMessage::ControllerMessage(const ControllerMessage& other) : ::WaveShortMessage(other)
 {
     copy(other);
 }
@@ -188,7 +188,7 @@ ControllerMessage::~ControllerMessage()
 ControllerMessage& ControllerMessage::operator=(const ControllerMessage& other)
 {
     if (this==&other) return *this;
-    ::omnetpp::cMessage::operator=(other);
+    ::WaveShortMessage::operator=(other);
     copy(other);
     return *this;
 }
@@ -208,7 +208,7 @@ void ControllerMessage::copy(const ControllerMessage& other)
 
 void ControllerMessage::parsimPack(omnetpp::cCommBuffer *b) const
 {
-    ::omnetpp::cMessage::parsimPack(b);
+    ::WaveShortMessage::parsimPack(b);
     doParsimPacking(b,this->sourceVehicle);
     doParsimPacking(b,this->messageType);
     doParsimPacking(b,this->flowAction);
@@ -222,7 +222,7 @@ void ControllerMessage::parsimPack(omnetpp::cCommBuffer *b) const
 
 void ControllerMessage::parsimUnpack(omnetpp::cCommBuffer *b)
 {
-    ::omnetpp::cMessage::parsimUnpack(b);
+    ::WaveShortMessage::parsimUnpack(b);
     doParsimUnpacking(b,this->sourceVehicle);
     doParsimUnpacking(b,this->messageType);
     doParsimUnpacking(b,this->flowAction);
@@ -353,7 +353,7 @@ class ControllerMessageDescriptor : public omnetpp::cClassDescriptor
 
 Register_ClassDescriptor(ControllerMessageDescriptor);
 
-ControllerMessageDescriptor::ControllerMessageDescriptor() : omnetpp::cClassDescriptor("ControllerMessage", "omnetpp::cMessage")
+ControllerMessageDescriptor::ControllerMessageDescriptor() : omnetpp::cClassDescriptor("ControllerMessage", "WaveShortMessage")
 {
     propertynames = nullptr;
 }

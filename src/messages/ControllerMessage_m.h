@@ -15,10 +15,14 @@
 
 
 
+// cplusplus {{
+#include "veins/modules/messages/WaveShortMessage_m.h"
+// }}
+
 /**
- * Class generated from <tt>messages/ControllerMessage.msg:1</tt> by nedtool.
+ * Class generated from <tt>messages/ControllerMessage.msg:7</tt> by nedtool.
  * <pre>
- * message ControllerMessage
+ * message ControllerMessage extends WaveShortMessage
  * {
  *     int sourceVehicle;
  * 
@@ -36,7 +40,7 @@
  * }
  * </pre>
  */
-class ControllerMessage : public ::omnetpp::cMessage
+class ControllerMessage : public ::WaveShortMessage
 {
   protected:
     int sourceVehicle;

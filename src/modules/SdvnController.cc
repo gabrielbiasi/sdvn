@@ -33,6 +33,7 @@ void SdvnController::initialize(int stage) {
         timestamps = map<int, simtime_t>();
 
         prefixRsuId = 10000;
+        architecture = getSystemModule()->par("architecture").longValue();
     }
 }
 
@@ -152,21 +153,33 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
 
 
 void SdvnController::handleMessage(cMessage *msg) {
-
     if(msg->getArrivalGateId() == inControl) {
         if(msg->getKind() == 011) { // 011 -> Neighbor Message
-            //EV_INFO << "SDVN Controller: Neighbor Update Received\n";
+            EV_INFO << "SDVN Controller: Neighbor Update Received\n";
             updateNetworkGraph(msg);
             delete msg;
             return;
         }
 
         if(msg->getKind() == 012) { // 012 -> Controller Message
-            EV_INFO << "SDVN Controller:  Packet In Received from ["<< ((ControllerMessage*) msg)->getSourceVehicle() << "]\n";
-            ControllerMessage* flow_mod = prepareNewFlowMod(msg);
-            sendController(flow_mod);
-            delete msg;
-            return;
+            ControllerMessage *flow, *cm = dynamic_cast<ControllerMessage*>(msg);
+            EV_INFO << "SDVN Controller:  Packet In Received from ["<< cm->getSourceVehicle() << "]\n";
+
+            if(architecture == CENTRALIZED) {
+                flow = prepareNewFlowMod(msg);
+                sendController(flow);
+                delete msg;
+                return;
+            } else {
+                // Distributed
+                int rsuId, target = cm->getDestinationAddress();
+                if(findLocalNode(target)) { // If vehicle is in local SDVN, just
+                    flow = prepareNewFlowMod(msg);
+                    sendController(flow);
+                    delete msg;
+                }
+                return;
+            }
         }
 
     } else if(msg->isSelfMessage()) {
@@ -181,6 +194,41 @@ vector<int>* SdvnController::getNodesId() {
     result = new vector<int>();
     for(auto node : graph) result->push_back(node.first);
     return result;
+}
+
+bool SdvnController::findLocalNode(int id) {
+    for(auto node : graph) {
+        if(node.first == id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int SdvnController::findTarget(int id) {
+    std::stringstream ss;
+    vector<int>* list;
+    SdvnController* ctr;
+    cModule *sys = getSystemModule();
+    int i, j, numRsu = sys->par("numRsu").longValue();
+    bool flag;
+
+    for(i = 0; i < numRsu; i++) {
+        ss.str("");
+        ss << ".rsu[" << i << "].controller";
+        ctr = (SdvnController*) getSystemModule()->getModuleByPath(ss.str().c_str());
+        list = ctr->getNodesId();
+        flag = false;
+        for(j = 0; j < list->size(); j++) {
+            if(list->at(j) == id) {
+                flag = true;
+                break;
+            }
+        }
+        delete list;
+        if(flag) return j;
+    }
+    return -1;
 }
 
 void SdvnController::sendController(cMessage* msg) {

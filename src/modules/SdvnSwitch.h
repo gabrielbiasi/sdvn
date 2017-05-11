@@ -68,8 +68,8 @@ class SdvnSwitch : public BaseWaveApplLayer {
         int toApp;
 
         // Controller Gates
-        int fromLteBase;
-        int toLteBase;
+        int fromController;
+        int toController;
 
         // RSU Gates
         int fromRsu;
@@ -101,8 +101,8 @@ class SdvnSwitch : public BaseWaveApplLayer {
 
         void onApplication(AppMessage* msg);
         void sendApplication(AppMessage* msg);
-        void onLte(ControllerMessage* msg);
-        void sendLte(cMessage* msg);
+        void onController(ControllerMessage* msg);
+        void sendController(cMessage* msg);
         void cleanFlowTable();
 
         void addRsuNeighbors();

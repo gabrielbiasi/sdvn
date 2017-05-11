@@ -1,4 +1,10 @@
-message ControllerMessage {
+cplusplus {{
+#include "veins/modules/messages/WaveShortMessage_m.h"
+}}
+
+class WaveShortMessage;
+
+message ControllerMessage extends WaveShortMessage {
     
 	int sourceVehicle;
 	

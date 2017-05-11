@@ -21,7 +21,7 @@ import sdvn.nodes.RSU_C;
 import org.car2x.veins.nodes.Scenario;
 import ned.DatarateChannel;
 
-network SdvnScenario extends Scenario
+network CentralizedSdvn extends Scenario
 {	    
     parameters:
         int numRsu       = default(4);

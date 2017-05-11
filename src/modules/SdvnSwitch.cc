@@ -58,8 +58,8 @@ void SdvnSwitch::initialize(int stage) {
         fromRsu = findGate("fromRsu");
         toRsu = findGate("toRsu");
 
-        fromLteBase = findGate("fromLteBase");
-        toLteBase = findGate("toLteBase");
+        fromController = findGate("fromController");
+        toController = findGate("toController");
 
         controllerBeaconEvent = new cMessage("Send Neighbors", 010);
         controllerBeaconsInterval = par("controllerBeaconsInterval").doubleValue();
@@ -226,7 +226,7 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
             cm->setSourceVehicle(myId);
             cm->setFlowAction(PACKET_IN);
             cm->setDestinationAddress(packet->getDestinationAddress());
-            sendLte(cm);
+            sendController(cm);
         }
     }
 }
@@ -250,7 +250,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
         EV_INFO << "]\n";
 
         currentNeighbors.clear();
-        sendLte(nm);
+        sendController(nm);
         scheduleAt(simTime() + controllerBeaconsInterval, controllerBeaconEvent);
 
         if(!isVehicle()) addRsuNeighbors(); // adds the neighbors RSUs
@@ -272,7 +272,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 }
 
 
-void SdvnSwitch::onLte(ControllerMessage* msg) {
+void SdvnSwitch::onController(ControllerMessage* msg) {
     // New Flow Rule
     EV_INFO << "Vehicle [" << myId << "] ControllerMessage received.\n";
     if(msg->getMessageType() == FLOW_MOD && msg->getSourceVehicle() == myId) {
@@ -365,14 +365,14 @@ void SdvnSwitch::onBeacon(WaveShortMessage* wsm) {
 
 void SdvnSwitch::handleMessage(cMessage* msg) {
     int gateId = msg->getArrivalGateId();
-    if(gateId == fromLteBase) {
-        onLte( (ControllerMessage*) msg);
+    if(gateId == fromController) {
+        onController((ControllerMessage*) msg);
     } else if (gateId == fromApp) {
-        onApplication( (AppMessage*) msg);
+        onApplication((AppMessage*) msg);
     } else if (std::string(msg->getName()) == "data" || gateId == fromRsu) {
-        onData( (WaveShortMessage*) msg);
+        onData((WaveShortMessage*) msg);
     } else if (std::string(msg->getName()) == "beacon") {
-        onBeacon( (WaveShortMessage*) msg);
+        onBeacon((WaveShortMessage*) msg);
     } else {
         BaseLayer::handleMessage(msg);
     }
@@ -386,10 +386,15 @@ void SdvnSwitch::sendApplication(AppMessage* msg)  {
     cSimpleModule::send(msg, toApp);
 }
 
-void SdvnSwitch::sendLte(cMessage* msg)  {
-    cModule* lteBase = getSystemModule()->getModuleByPath(".base");
-    double lteDelay = lteBase->par("lteDelay").doubleValue();
-    cSimpleModule::sendDirect(msg, lteDelay, 0, lteBase, "radioIn");
+void SdvnSwitch::sendController(cMessage* msg)  {
+    if(architecture == CENTRALIZED) {
+        cModule* lteBase = getSystemModule()->getModuleByPath(".base");
+        double lteDelay = lteBase->par("lteDelay").doubleValue();
+        cSimpleModule::sendDirect(msg, lteDelay, 0, lteBase, "radioIn");
+    } else {
+        // Distributed Architecture
+        // do something
+    }
 }
 
 void SdvnSwitch::sendRSU(WaveShortMessage* msg) {
@@ -446,7 +451,7 @@ bool SdvnSwitch::performAttack(AppMessage* msg) {
                     cm->setFlowAction(PACKET_IN);
                     j = (victim-10 < 0) ? 0 : victim-10;
                     cm->setDestinationAddress(intuniform(10, victim+10));
-                    sendLte(cm);
+                    sendController(cm);
                 }
                 return false;
             }

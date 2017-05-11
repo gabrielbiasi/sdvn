@@ -163,7 +163,7 @@ inline std::ostream& operator<<(std::ostream& out, const std::vector<T,A>& vec)
 
 Register_Class(NeighborMessage);
 
-NeighborMessage::NeighborMessage(const char *name, int kind) : ::omnetpp::cMessage(name,kind)
+NeighborMessage::NeighborMessage(const char *name, int kind) : ::WaveShortMessage(name,kind)
 {
     this->sourceVehicle = 0;
     this->timestamp = 0;
@@ -171,7 +171,7 @@ NeighborMessage::NeighborMessage(const char *name, int kind) : ::omnetpp::cMessa
     this->neighbors = 0;
 }
 
-NeighborMessage::NeighborMessage(const NeighborMessage& other) : ::omnetpp::cMessage(other)
+NeighborMessage::NeighborMessage(const NeighborMessage& other) : ::WaveShortMessage(other)
 {
     neighbors_arraysize = 0;
     this->neighbors = 0;
@@ -186,7 +186,7 @@ NeighborMessage::~NeighborMessage()
 NeighborMessage& NeighborMessage::operator=(const NeighborMessage& other)
 {
     if (this==&other) return *this;
-    ::omnetpp::cMessage::operator=(other);
+    ::WaveShortMessage::operator=(other);
     copy(other);
     return *this;
 }
@@ -204,7 +204,7 @@ void NeighborMessage::copy(const NeighborMessage& other)
 
 void NeighborMessage::parsimPack(omnetpp::cCommBuffer *b) const
 {
-    ::omnetpp::cMessage::parsimPack(b);
+    ::WaveShortMessage::parsimPack(b);
     doParsimPacking(b,this->sourceVehicle);
     doParsimPacking(b,this->timestamp);
     b->pack(neighbors_arraysize);
@@ -213,7 +213,7 @@ void NeighborMessage::parsimPack(omnetpp::cCommBuffer *b) const
 
 void NeighborMessage::parsimUnpack(omnetpp::cCommBuffer *b)
 {
-    ::omnetpp::cMessage::parsimUnpack(b);
+    ::WaveShortMessage::parsimUnpack(b);
     doParsimUnpacking(b,this->sourceVehicle);
     doParsimUnpacking(b,this->timestamp);
     delete [] this->neighbors;
@@ -305,7 +305,7 @@ class NeighborMessageDescriptor : public omnetpp::cClassDescriptor
 
 Register_ClassDescriptor(NeighborMessageDescriptor);
 
-NeighborMessageDescriptor::NeighborMessageDescriptor() : omnetpp::cClassDescriptor("NeighborMessage", "omnetpp::cMessage")
+NeighborMessageDescriptor::NeighborMessageDescriptor() : omnetpp::cClassDescriptor("NeighborMessage", "WaveShortMessage")
 {
     propertynames = nullptr;
 }

@@ -167,9 +167,19 @@ $O/messages/AppMessage_m.o: messages/AppMessage_m.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
 	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h
 $O/messages/ControllerMessage_m.o: messages/ControllerMessage_m.cc \
-	messages/ControllerMessage_m.h
+	messages/ControllerMessage_m.h \
+	$(VEINS_PROJ)/src/veins/base/utils/Coord.h \
+	$(VEINS_PROJ)/src/veins/base/utils/FWMath.h \
+	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
+	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
+	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h
 $O/messages/NeighborMessage_m.o: messages/NeighborMessage_m.cc \
-	messages/NeighborMessage_m.h
+	messages/NeighborMessage_m.h \
+	$(VEINS_PROJ)/src/veins/base/utils/Coord.h \
+	$(VEINS_PROJ)/src/veins/base/utils/FWMath.h \
+	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
+	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
+	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h
 $O/modules/LteBase.o: modules/LteBase.cc \
 	messages/ControllerMessage_m.h \
 	modules/LteBase.h \
@@ -181,6 +191,7 @@ $O/modules/LteBase.o: modules/LteBase.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/FindModule.h \
 	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
+	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIBuffer.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIColor.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIConnection.h \
@@ -208,6 +219,7 @@ $O/modules/SdvnController.o: modules/SdvnController.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
 	$(VEINS_PROJ)/src/veins/base/utils/Move.h \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
+	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIBuffer.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIColor.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICommandInterface.h \

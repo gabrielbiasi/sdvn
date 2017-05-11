@@ -31,6 +31,7 @@ protected:
     double dropAfter;
 
     int prefixRsuId;
+    int architecture;
 
     virtual void initialize(int stage);
     virtual void handleMessage(cMessage *msg);
@@ -43,6 +44,8 @@ protected:
 
 public:
     vector<int>* getNodesId();
+    int findTarget(int id);
+    bool findLocalNode(int id);
 };
 
 #endif

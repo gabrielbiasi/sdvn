@@ -30,7 +30,10 @@ module RSU_D
                 @display("p=130,172;i=block/cogwheel");
         }
         
-    connections allowunconnected:        
+    connections allowunconnected:
+        switcher.toController --> controller.inControl;
+        switcher.fromController <-- controller.outControl;
+
         nic.upperLayerOut --> switcher.lowerLayerIn;
         nic.upperLayerIn <-- switcher.lowerLayerOut;
         nic.upperControlOut --> switcher.lowerControlIn;

@@ -48,7 +48,7 @@ void LteBase::sendSwitch(cMessage* msg, int vehicle) {
     ss << ".vehicle[" << vehicle << "].switcher";
     cModule* module = getSystemModule()->getModuleByPath(ss.str().c_str());
     if(module != nullptr) { // vehicle might be finished your route
-        cSimpleModule::sendDirect(msg, lteDelay, 0, module, "fromLteBase");
+        cSimpleModule::sendDirect(msg, lteDelay, 0, module, "fromController");
     } else {
         delete msg;
     }
@@ -58,7 +58,7 @@ void LteBase::sendRSU(cMessage* msg, int rsu_id) {
     std::stringstream ss;
     ss << ".rsu[" << (rsu_id-prefixRsuId) << "].switcher";
     cModule* module = getSystemModule()->getModuleByPath(ss.str().c_str());
-    cSimpleModule::sendDirect(msg, lteDelay, 0, module, "fromLteBase");
+    cSimpleModule::sendDirect(msg, lteDelay, 0, module, "fromController");
 }
 
 

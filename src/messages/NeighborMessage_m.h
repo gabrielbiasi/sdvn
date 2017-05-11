@@ -15,10 +15,14 @@
 
 
 
+// cplusplus {{
+#include "veins/modules/messages/WaveShortMessage_m.h"
+// }}
+
 /**
- * Class generated from <tt>messages/NeighborMessage.msg:1</tt> by nedtool.
+ * Class generated from <tt>messages/NeighborMessage.msg:7</tt> by nedtool.
  * <pre>
- * message NeighborMessage
+ * message NeighborMessage extends WaveShortMessage
  * {
  *     int sourceVehicle;
  *     simtime_t timestamp;
@@ -26,7 +30,7 @@
  * }
  * </pre>
  */
-class NeighborMessage : public ::omnetpp::cMessage
+class NeighborMessage : public ::WaveShortMessage
 {
   protected:
     int sourceVehicle;

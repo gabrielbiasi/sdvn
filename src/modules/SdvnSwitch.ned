@@ -41,6 +41,6 @@ simple SdvnSwitch extends BaseWaveApplLayer {
         output toRsu;
         
         // Gates for LTE
-        input fromLteBase;
-        output toLteBase;
+        input fromController;
+        output toController;
 }
