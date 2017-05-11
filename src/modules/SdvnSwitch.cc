@@ -393,7 +393,36 @@ void SdvnSwitch::sendController(cMessage* msg)  {
         cSimpleModule::sendDirect(msg, lteDelay, 0, lteBase, "radioIn");
     } else {
         // Distributed Architecture
-        // do something
+        if(!isVehicle()) {
+            // If node is a RSU, just send direct to the module.
+            send(msg, toController);
+        } else {
+            for(auto node : currentNeighbors) {
+                if(node >= prefixRsuId) {
+                    // RSU found!
+                    WaveShortMessage* wsm = dynamic_cast<WaveShortMessage*>(msg);
+
+                    wsm->setName("control");
+                    wsm->addBitLength(headerLength);
+                    wsm->setChannelNumber(Channels::CCH);
+                    wsm->setPsid(0);
+                    wsm->setPriority(par("dataPriority").longValue());
+                    wsm->setWsmVersion(1);
+                    wsm->setTimestamp(simTime());
+                    wsm->setSenderAddress(myId);
+                    wsm->setRecipientAddress(node);
+                    wsm->setSenderPos(curPosition);
+                    wsm->setSerial(0);
+
+                    sendWSM(wsm);
+                    return;
+                }
+            }
+            std::stringstream ss;
+            ss << "Vehicle [" << myId << "] did not find a RSU under Distributed Mode.\n";
+            ss << "SimTime: "<< simTime() << "\n";
+            perror(ss.str().c_str());
+        }
     }
 }
 
