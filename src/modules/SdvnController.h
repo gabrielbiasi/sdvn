@@ -39,11 +39,11 @@ protected:
 
     void sendController(cMessage* msg);
     void updateNetworkGraph(cMessage* message);
-    ControllerMessage* prepareNewFlowMod(cMessage* message);
+    ControllerMessage* newFlow(int sourceId, int destinationId, int flowAction, int flowDestination);
     int runSimpleDijkstra(int source, int destination);
 
 public:
-    vector<int>* getNodesId();
+    bool isAlive(int id);
     int findTarget(int id);
     bool findLocalNode(int id);
 };

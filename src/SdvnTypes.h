@@ -6,6 +6,10 @@ enum MESSAGETYPES {
     FLOW_MOD = 1
 };
 
+enum INVALIDTYPES {
+    NO_VEHICLE = -1
+};
+
 enum ARCHITECTURE {
     CENTRALIZED = 0,
     DISTRIBUTED = 1

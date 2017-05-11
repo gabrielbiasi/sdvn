@@ -52,12 +52,12 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
          listV.push_back((*j).first);
      }
 
-     // Pilha de veículos
+     // Vehicle stack
      dist[source] = 0;
      prev[source] = source;
      while(listV.size() > 0) {
 
-         // Seleciona o menor dist[]
+         // Getting the shortest distance
          int shortV = -1, shortDist = 9999;
 
          std::vector<int>::iterator j, i = listV.begin();
@@ -110,32 +110,17 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
      return -1;
 }
 
-
-ControllerMessage* SdvnController::prepareNewFlowMod(cMessage* message) {
-    ControllerMessage* m = (ControllerMessage*) message;
-    int flowDestination;
-    int vehicle = m->getSourceVehicle();
-    int destination = m->getDestinationAddress();
-
+ControllerMessage* SdvnController::newFlow(int sourceId, int destinationId, int flowAction, int flowDestination) {
     ControllerMessage* flow = new ControllerMessage();
     flow->setMessageType(FLOW_MOD);
-    flow->setSourceVehicle(vehicle);
-    flow->setDestinationAddress(destination);
-
-    if(simTime() < timestamps[destination] + dropAfter) { // Check if vehicle still sending neighbor messages
-        flowDestination = runSimpleDijkstra(vehicle, destination);
-        flow->setFlowAction(flowDestination != -1 ? FORWARD : STANDBY);
-        flow->setFlowId(flowDestination);
-    } else {
-        flow->setFlowAction(DROP);
-        flow->setFlowId(-1);
-    }
-
+    flow->setSourceVehicle(sourceId);
+    flow->setDestinationAddress(destinationId);
+    flow->setFlowAction(flowAction);
+    flow->setFlowId(flowDestination);
     flow->setHardTimeout(hardTimeout);
     flow->setIdleTimeout(idleTimeout);
     return flow;
 }
-
 
 void SdvnController::updateNetworkGraph(cMessage* message) {
     NeighborMessage* m = (NeighborMessage*) message;
@@ -145,7 +130,8 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
 
     new_neighbors = vector<int>();
     for(unsigned int i = 0; i < m->getNeighborsArraySize(); i++) {
-        new_neighbors.push_back(m->getNeighbors(i)); // put the neighbors in the new vector
+        // put the neighbors in the new vector
+        new_neighbors.push_back(m->getNeighbors(i));
     }
     graph[vehicle] = new_neighbors;
     timestamps[vehicle] = m->getTimestamp();
@@ -154,32 +140,39 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
 
 void SdvnController::handleMessage(cMessage *msg) {
     if(msg->getArrivalGateId() == inControl) {
-        if(msg->getKind() == 011) { // 011 -> Neighbor Message
+        if(msg->getKind() == 011) {
+            // 011 -> Neighbor Message
             EV_INFO << "SDVN Controller: Neighbor Update Received\n";
             updateNetworkGraph(msg);
             delete msg;
             return;
-        }
 
-        if(msg->getKind() == 012) { // 012 -> Controller Message
+        } else if(msg->getKind() == 012) {
+            // 012 -> Controller Message
+            int sourceId, destinationId, flowId;
             ControllerMessage *flow, *cm = dynamic_cast<ControllerMessage*>(msg);
-            EV_INFO << "SDVN Controller:  Packet In Received from ["<< cm->getSourceVehicle() << "]\n";
 
-            if(architecture == CENTRALIZED) {
-                flow = prepareNewFlowMod(msg);
-                sendController(flow);
-                delete msg;
-                return;
-            } else {
-                // Distributed
-                int rsuId, target = cm->getDestinationAddress();
-                if(findLocalNode(target)) { // If vehicle is in local SDVN, just
-                    flow = prepareNewFlowMod(msg);
-                    sendController(flow);
-                    delete msg;
+            sourceId = cm->getSourceVehicle();
+            destinationId = cm->getDestinationAddress();
+            EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
+
+            if(architecture == CENTRALIZED || (architecture == DISTRIBUTED && findLocalNode(destinationId))) {
+                // Checking if the vehicle is still "alive"
+                if(isAlive(destinationId)) {
+                    flowId = runSimpleDijkstra(sourceId, destinationId);
+                    flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : STANDBY, flowId);
+                } else {
+                    // Vehicle stopped sending neighbor messages, creating a drop rule.
+                    flow = newFlow(sourceId, destinationId, DROP, NO_VEHICLE);
                 }
-                return;
+            } else {
+                // Distributed and vehicle is not in local SDVN
+                flowId = findTarget(destinationId);
+                flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, flowId);
             }
+            sendController(flow);
+            delete msg;
+            return;
         }
 
     } else if(msg->isSelfMessage()) {
@@ -189,46 +182,35 @@ void SdvnController::handleMessage(cMessage *msg) {
     }
 }
 
-vector<int>* SdvnController::getNodesId() {
-    vector<int>* result;
-    result = new vector<int>();
-    for(auto node : graph) result->push_back(node.first);
-    return result;
+bool SdvnController::isAlive(int id) {
+    return (simTime() < timestamps[id] + dropAfter);
 }
 
 bool SdvnController::findLocalNode(int id) {
-    for(auto node : graph) {
-        if(node.first == id) {
+    for(auto node : graph)
+        if(node.first == id)
             return true;
-        }
-    }
     return false;
 }
 
 int SdvnController::findTarget(int id) {
+    int i, numRsu;
     std::stringstream ss;
-    vector<int>* list;
     SdvnController* ctr;
     cModule *sys = getSystemModule();
-    int i, j, numRsu = sys->par("numRsu").longValue();
-    bool flag;
 
+    // For each RSU on simulation
+    numRsu = sys->par("numRsu").longValue();
     for(i = 0; i < numRsu; i++) {
         ss.str("");
         ss << ".rsu[" << i << "].controller";
         ctr = (SdvnController*) getSystemModule()->getModuleByPath(ss.str().c_str());
-        list = ctr->getNodesId();
-        flag = false;
-        for(j = 0; j < list->size(); j++) {
-            if(list->at(j) == id) {
-                flag = true;
-                break;
-            }
+
+        if(ctr->findLocalNode(id)) { // Vehicle found!
+            return ctr->isAlive(id) ? (i + prefixRsuId) : NO_VEHICLE;
         }
-        delete list;
-        if(flag) return j;
     }
-    return -1;
+    return NO_VEHICLE; // Return NO_VEHICLE to DROP
 }
 
 void SdvnController::sendController(cMessage* msg) {
@@ -239,4 +221,5 @@ void SdvnController::finish() {
     cSimpleModule::finish();
     for(auto &j : graph) j.second.clear(); // free neighbors lists
     graph.clear();
+    timestamps.clear();
 }
