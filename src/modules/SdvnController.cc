@@ -112,6 +112,7 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
 
 ControllerMessage* SdvnController::newFlow(int sourceId, int destinationId, int flowAction, int flowDestination) {
     ControllerMessage* flow = new ControllerMessage();
+    flow->setName("control");
     flow->setMessageType(FLOW_MOD);
     flow->setSourceVehicle(sourceId);
     flow->setDestinationAddress(destinationId);
@@ -149,9 +150,12 @@ void SdvnController::handleMessage(cMessage *msg) {
 
         } else if(msg->getKind() == 012) {
             // 012 -> Controller Message
-            int sourceId, destinationId, flowId;
+            int myId, sourceId, destinationId, flowId;
+            WaveShortMessage *wsm, *ori;
             ControllerMessage *flow, *cm = dynamic_cast<ControllerMessage*>(msg);
+            ori = dynamic_cast<WaveShortMessage*>(msg);
 
+            myId = ori->getRecipientAddress();//problem
             sourceId = cm->getSourceVehicle();
             destinationId = cm->getDestinationAddress();
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
@@ -167,8 +171,19 @@ void SdvnController::handleMessage(cMessage *msg) {
                 }
             } else {
                 // Distributed and vehicle is not in local SDVN
-                flowId = findTarget(destinationId);
+                flowId = findTarget(destinationId); // not him, but send me and I will send
                 flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, flowId);
+
+                wsm = (WaveShortMessage*) flow;
+                wsm->addBitLength(256);
+                wsm->setChannelNumber(178);
+                wsm->setPsid(0);
+                wsm->setPriority(2);
+                wsm->setWsmVersion(1);
+                wsm->setTimestamp(simTime());
+                wsm->setSenderAddress(ori->getRecipientAddress());
+                wsm->setRecipientAddress(sourceId);
+                wsm->setSerial(0);
             }
             sendController(flow);
             delete msg;

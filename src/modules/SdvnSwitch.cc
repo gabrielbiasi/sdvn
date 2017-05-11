@@ -249,8 +249,8 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
         }
         EV_INFO << "]\n";
 
-        currentNeighbors.clear();
         sendController(nm);
+        currentNeighbors.clear();
         scheduleAt(simTime() + controllerBeaconsInterval, controllerBeaconEvent);
 
         if(!isVehicle()) addRsuNeighbors(); // adds the neighbors RSUs
@@ -273,6 +273,13 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 
 
 void SdvnSwitch::onController(ControllerMessage* msg) {
+
+    // Ignore control packet not assigned to me
+    if(msg->getSourceVehicle() != myId) {
+        delete msg;
+        return;
+    }
+
     // New Flow Rule
     EV_INFO << "Vehicle [" << myId << "] ControllerMessage received.\n";
     if(msg->getMessageType() == FLOW_MOD && msg->getSourceVehicle() == myId) {
@@ -364,14 +371,26 @@ void SdvnSwitch::onBeacon(WaveShortMessage* wsm) {
 }
 
 void SdvnSwitch::handleMessage(cMessage* msg) {
+    std::string name = std::string(msg->getName());
     int gateId = msg->getArrivalGateId();
-    if(gateId == fromController) {
-        onController((ControllerMessage*) msg);
-    } else if (gateId == fromApp) {
+
+    if(architecture == DISTRIBUTED && name == "control") {
+        WaveShortMessage* wsm = (WaveShortMessage*) msg;
+        if(!isVehicle() && gateId != fromController && wsm->getRecipientAddress() == myId) { // RSU just passing message to controller
+            send(msg, toController);
+        } else if(gateId == fromController && wsm->getRecipientAddress() != myId) { // Controller wants to send a control message
+            sendWSM(wsm);
+        } else {
+            onController((ControllerMessage*) msg);
+        }
+    }
+    else if (gateId == fromApp) {
         onApplication((AppMessage*) msg);
-    } else if (std::string(msg->getName()) == "data" || gateId == fromRsu) {
+    } else if(name == "control") {
+        onController((ControllerMessage*) msg);
+    } else if (name == "data" || gateId == fromRsu) {
         onData((WaveShortMessage*) msg);
-    } else if (std::string(msg->getName()) == "beacon") {
+    } else if (name == "beacon") {
         onBeacon((WaveShortMessage*) msg);
     } else {
         BaseLayer::handleMessage(msg);
