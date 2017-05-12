@@ -153,9 +153,7 @@ void SdvnController::handleMessage(cMessage *msg) {
             int myId, sourceId, destinationId, flowId;
             WaveShortMessage *wsm, *ori;
             ControllerMessage *flow, *cm = dynamic_cast<ControllerMessage*>(msg);
-            ori = dynamic_cast<WaveShortMessage*>(msg);
 
-            myId = ori->getRecipientAddress();//problem
             sourceId = cm->getSourceVehicle();
             destinationId = cm->getDestinationAddress();
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
@@ -171,19 +169,27 @@ void SdvnController::handleMessage(cMessage *msg) {
                 }
             } else {
                 // Distributed and vehicle is not in local SDVN
-                flowId = findTarget(destinationId); // not him, but send me and I will send
-                flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, flowId);
+                // Getting RSU ID
+                ori = dynamic_cast<WaveShortMessage*>(msg);
+                myId = ori->getRecipientAddress();
 
-                wsm = (WaveShortMessage*) flow;
+                flowId = findTarget(destinationId);
+                // if the vehicle is found in another RSU, send a FORWARD rule to
+                // vehicle in order to send all messages to "me". After, "me" will
+                // send another PACKET_IN in order to send to RSU and so on.
+                flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, (flowId != NO_VEHICLE) ? myId : flowId);
+
+                wsm = dynamic_cast<WaveShortMessage*>(msg);
                 wsm->addBitLength(256);
                 wsm->setChannelNumber(178);
                 wsm->setPsid(0);
                 wsm->setPriority(2);
                 wsm->setWsmVersion(1);
                 wsm->setTimestamp(simTime());
-                wsm->setSenderAddress(ori->getRecipientAddress());
+                wsm->setSenderAddress(myId);
                 wsm->setRecipientAddress(sourceId);
                 wsm->setSerial(0);
+
             }
             sendController(flow);
             delete msg;
@@ -197,9 +203,25 @@ void SdvnController::handleMessage(cMessage *msg) {
     }
 }
 
+void SdvnController::sendController(cMessage* msg) {
+    send(msg, outControl);
+}
+
 bool SdvnController::isAlive(int id) {
     return (simTime() < timestamps[id] + dropAfter);
 }
+
+void SdvnController::finish() {
+    cSimpleModule::finish();
+    for(auto &j : graph) j.second.clear(); // free neighbors lists
+    graph.clear();
+    timestamps.clear();
+}
+
+/*
+ * Distributed Methods
+ *
+ */
 
 bool SdvnController::findLocalNode(int id) {
     for(auto node : graph)
@@ -226,15 +248,4 @@ int SdvnController::findTarget(int id) {
         }
     }
     return NO_VEHICLE; // Return NO_VEHICLE to DROP
-}
-
-void SdvnController::sendController(cMessage* msg) {
-    send(msg, outControl);
-}
-
-void SdvnController::finish() {
-    cSimpleModule::finish();
-    for(auto &j : graph) j.second.clear(); // free neighbors lists
-    graph.clear();
-    timestamps.clear();
 }
