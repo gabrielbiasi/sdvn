@@ -154,6 +154,10 @@ void SdvnController::handleMessage(cMessage *msg) {
             WaveShortMessage *wsm, *ori;
             ControllerMessage *flow, *cm = dynamic_cast<ControllerMessage*>(msg);
 
+            // Getting RSU ID
+            ori = dynamic_cast<WaveShortMessage*>(msg);
+            myId = ori->getRecipientAddress();
+
             sourceId = cm->getSourceVehicle();
             destinationId = cm->getDestinationAddress();
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
@@ -169,28 +173,28 @@ void SdvnController::handleMessage(cMessage *msg) {
                 }
             } else {
                 // Distributed and vehicle is not in local SDVN
-                // Getting RSU ID
-                ori = dynamic_cast<WaveShortMessage*>(msg);
-                myId = ori->getRecipientAddress();
-
                 flowId = findTarget(destinationId);
                 // if the vehicle is found in another RSU, send a FORWARD rule to
                 // vehicle in order to send all messages to "me". After, "me" will
                 // send another PACKET_IN in order to send to RSU and so on.
-                flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, (flowId != NO_VEHICLE) ? myId : flowId);
-
-                wsm = dynamic_cast<WaveShortMessage*>(msg);
-                wsm->addBitLength(256);
-                wsm->setChannelNumber(178);
-                wsm->setPsid(0);
-                wsm->setPriority(2);
-                wsm->setWsmVersion(1);
-                wsm->setTimestamp(simTime());
-                wsm->setSenderAddress(myId);
-                wsm->setRecipientAddress(sourceId);
-                wsm->setSerial(0);
-
+                if(sourceId < prefixRsuId) {
+                    flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, (flowId != NO_VEHICLE) ? myId : flowId);
+                } else {
+                    flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, flowId);
+                }
             }
+
+            wsm = dynamic_cast<WaveShortMessage*>(flow);
+            wsm->addBitLength(256);
+            wsm->setChannelNumber(178);
+            wsm->setPsid(0);
+            wsm->setPriority(2);
+            wsm->setWsmVersion(1);
+            wsm->setTimestamp(simTime());
+            wsm->setSenderAddress(myId);
+            wsm->setRecipientAddress(sourceId);
+            wsm->setSerial(0);
+
             sendController(flow);
             delete msg;
             return;
@@ -204,7 +208,7 @@ void SdvnController::handleMessage(cMessage *msg) {
 }
 
 void SdvnController::sendController(cMessage* msg) {
-    send(msg, outControl);
+    sendDelayed(msg, 0.0001, outControl);
 }
 
 bool SdvnController::isAlive(int id) {

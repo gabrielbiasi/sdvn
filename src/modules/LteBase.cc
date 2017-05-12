@@ -40,7 +40,7 @@ void LteBase::handleMessage(cMessage *msg) {
 }
 
 void LteBase::sendController(cMessage* msg)  {
-    send(msg, toController);
+    sendDelayed(msg, 0.0001, toController);
 }
 
 void LteBase::sendSwitch(cMessage* msg, int vehicle) {

@@ -27,11 +27,11 @@ network CentralizedSdvn extends Scenario
         int numRsu       = default(4);
         int architecture = default(0);
     	@display("bgb=1050,1050;bgi=background/map,s");
-	types:
-        channel EthernetLine extends DatarateChannel {
-            delay = 50ns;
-            datarate = 1000Mbps;
-        }
+	//types:
+     //   channel EthernetLine extends DatarateChannel {
+    //        delay = 50ns;
+     //       datarate = 1000Mbps;
+     //   }
     submodules:
         rsu[numRsu]: RSU_C {
             parameters:
@@ -46,6 +46,6 @@ network CentralizedSdvn extends Scenario
                 @display("p=1200,700;b=9,10,oval;i=device/antennatower");
         }
     connections:
-        base.toController --> EthernetLine --> controller.inControl;
-        base.fromController <-- EthernetLine <--  controller.outControl;
+        base.toController --> controller.inControl;
+        base.fromController <--  controller.outControl;
 }

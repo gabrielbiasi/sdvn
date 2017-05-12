@@ -274,12 +274,6 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 
 void SdvnSwitch::onController(ControllerMessage* msg) {
 
-    // Ignore control packet not assigned to me
-    if(msg->getSourceVehicle() != myId) {
-        delete msg;
-        return;
-    }
-
     // New Flow Rule
     EV_INFO << "Vehicle [" << myId << "] ControllerMessage received.\n";
     if(msg->getMessageType() == FLOW_MOD && msg->getSourceVehicle() == myId) {
@@ -375,24 +369,35 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
     int gateId = msg->getArrivalGateId();
 
     if(architecture == DISTRIBUTED && name == "control") {
+        EV_INFO << "lala\n";
         WaveShortMessage* wsm = (WaveShortMessage*) msg;
         if(!isVehicle() && gateId != fromController && wsm->getRecipientAddress() == myId) { // RSU just passing message to controller
             send(msg, toController);
+            EV_INFO << "lele\n";
         } else if(gateId == fromController && wsm->getRecipientAddress() != myId) { // Controller wants to send a control message
             sendWSM(wsm);
+            EV_INFO << "lili\n";
         } else {
-            onController((ControllerMessage*) msg);
+            EV_INFO << "lolo\n";
+            if(ControllerMessage* cm = dynamic_cast<ControllerMessage*>(msg)) {
+                onController(cm);
+            }
         }
     }
     else if (gateId == fromApp) {
+        EV_INFO << "lulu\n";
         onApplication((AppMessage*) msg);
     } else if(name == "control") {
+        EV_INFO << "haha\n";
         onController((ControllerMessage*) msg);
     } else if (name == "data" || gateId == fromRsu) {
+        EV_INFO << "hehe\n";
         onData((WaveShortMessage*) msg);
     } else if (name == "beacon") {
+        EV_INFO << "hihi\n";
         onBeacon((WaveShortMessage*) msg);
     } else {
+        EV_INFO << "hoho\n";
         BaseLayer::handleMessage(msg);
     }
 }
@@ -433,6 +438,7 @@ void SdvnSwitch::sendController(cMessage* msg)  {
                     wsm->setSenderPos(curPosition);
                     wsm->setSerial(0);
 
+                    EV_INFO << "Vehicle [" << myId << "] sending control message to RSU [" << node << "]\n";
                     sendWSM(wsm);
                     return;
                 }
