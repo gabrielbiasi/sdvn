@@ -42,8 +42,9 @@ protected:
     ControllerMessage* newFlow(int sourceId, int destinationId, int flowAction, int flowDestination);
     int runSimpleDijkstra(int source, int destination);
 
+    void clearFarNeighbors();
+
 public:
-    bool isAlive(int id);
     int findTarget(int id);
     bool findLocalNode(int id);
 };

@@ -381,6 +381,9 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
             EV_INFO << "lolo\n";
             if(ControllerMessage* cm = dynamic_cast<ControllerMessage*>(msg)) {
                 onController(cm);
+            } else {
+                // Receiving Neighbor Message, just ignoring.
+                delete msg;
             }
         }
     }
@@ -417,27 +420,28 @@ void SdvnSwitch::sendController(cMessage* msg)  {
         cSimpleModule::sendDirect(msg, lteDelay, 0, lteBase, "radioIn");
     } else {
         // Distributed Architecture
+
+        WaveShortMessage* wsm = dynamic_cast<WaveShortMessage*>(msg);
+        wsm->setName("control");
+        wsm->addBitLength(headerLength);
+        wsm->setChannelNumber(Channels::CCH);
+        wsm->setPsid(0);
+        wsm->setPriority(par("dataPriority").longValue());
+        wsm->setWsmVersion(1);
+        wsm->setTimestamp(simTime());
+        wsm->setSenderAddress(myId);
+        wsm->setSenderPos(curPosition);
+        wsm->setSerial(0);
+
         if(!isVehicle()) {
             // If node is a RSU, just send direct to the module.
+            wsm->setRecipientAddress(myId);
             send(msg, toController);
         } else {
             for(auto node : currentNeighbors) {
                 if(node >= prefixRsuId) {
                     // RSU found!
-                    WaveShortMessage* wsm = dynamic_cast<WaveShortMessage*>(msg);
-
-                    wsm->setName("control");
-                    wsm->addBitLength(headerLength);
-                    wsm->setChannelNumber(Channels::CCH);
-                    wsm->setPsid(0);
-                    wsm->setPriority(par("dataPriority").longValue());
-                    wsm->setWsmVersion(1);
-                    wsm->setTimestamp(simTime());
-                    wsm->setSenderAddress(myId);
                     wsm->setRecipientAddress(node);
-                    wsm->setSenderPos(curPosition);
-                    wsm->setSerial(0);
-
                     EV_INFO << "Vehicle [" << myId << "] sending control message to RSU [" << node << "]\n";
                     sendWSM(wsm);
                     return;

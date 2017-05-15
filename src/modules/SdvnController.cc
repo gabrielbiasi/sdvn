@@ -162,9 +162,11 @@ void SdvnController::handleMessage(cMessage *msg) {
             destinationId = cm->getDestinationAddress();
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
 
+            if(architecture == DISTRIBUTED) clearFarNeighbors();
+
             if(architecture == CENTRALIZED || (architecture == DISTRIBUTED && findLocalNode(destinationId))) {
                 // Checking if the vehicle is still "alive"
-                if(isAlive(destinationId)) {
+                if(simTime() < timestamps[destinationId] + dropAfter) {
                     flowId = runSimpleDijkstra(sourceId, destinationId);
                     flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : STANDBY, flowId);
                 } else {
@@ -177,7 +179,7 @@ void SdvnController::handleMessage(cMessage *msg) {
                 // if the vehicle is found in another RSU, send a FORWARD rule to
                 // vehicle in order to send all messages to "me". After, "me" will
                 // send another PACKET_IN in order to send to RSU and so on.
-                if(sourceId < prefixRsuId) {
+                if(sourceId != myId) {
                     flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, (flowId != NO_VEHICLE) ? myId : flowId);
                 } else {
                     flow = newFlow(sourceId, destinationId, (flowId != NO_VEHICLE) ? FORWARD : DROP, flowId);
@@ -211,10 +213,6 @@ void SdvnController::sendController(cMessage* msg) {
     sendDelayed(msg, 0.0001, outControl);
 }
 
-bool SdvnController::isAlive(int id) {
-    return (simTime() < timestamps[id] + dropAfter);
-}
-
 void SdvnController::finish() {
     cSimpleModule::finish();
     for(auto &j : graph) j.second.clear(); // free neighbors lists
@@ -234,6 +232,25 @@ bool SdvnController::findLocalNode(int id) {
     return false;
 }
 
+void SdvnController::clearFarNeighbors() {
+    vector<int> olders = vector<int>();
+    simtime_t now = simTime();
+    // For distributed mode, it is possible a vehicle
+    // switch between RSUs. Because of that, the parameter
+    // dropAfter is way more strict, in order to mantain
+    // the vehicle over only one RSU management.
+    for (auto vehicle : timestamps) {
+        if(now > vehicle.second + 1) {
+            olders.push_back(vehicle.first);
+        }
+    }
+    for(auto node : olders) {
+        EV_INFO << "Get OLDER! [" << node << "]\n";
+        graph.erase(node);
+        timestamps.erase(node);
+    }
+}
+
 int SdvnController::findTarget(int id) {
     int i, numRsu;
     std::stringstream ss;
@@ -248,7 +265,7 @@ int SdvnController::findTarget(int id) {
         ctr = (SdvnController*) getSystemModule()->getModuleByPath(ss.str().c_str());
 
         if(ctr->findLocalNode(id)) { // Vehicle found!
-            return ctr->isAlive(id) ? (i + prefixRsuId) : NO_VEHICLE;
+            return (i + prefixRsuId);
         }
     }
     return NO_VEHICLE; // Return NO_VEHICLE to DROP
