@@ -73,6 +73,8 @@ void SdvnSwitch::initialize(int stage) {
         packetInBuffer = std::vector<AppMessage*>();
         packetStandbyBuffer = std::vector<AppMessage*>();
 
+        rsuQueue = std::vector<WaveShortMessage*>();
+
         droppedRule = 0;
         droppedByTTL = 0;
         droppedByRule = 0;
@@ -362,6 +364,15 @@ void SdvnSwitch::onBeacon(WaveShortMessage* wsm) {
             return;
     // Store the new neighbor.
     currentNeighbors.push_back(sender);
+
+    if(architecture == DISTRIBUTED && !rsuQueue.empty() && sender >= prefixRsuId) {
+        // A RSU was found with control messages on rsuQueue on Distributed Mode.
+        // Sending right now.
+        for(auto i : rsuQueue) {
+            sendWSM(i);
+        }
+        rsuQueue.clear();
+    }
 }
 
 void SdvnSwitch::handleMessage(cMessage* msg) {
@@ -447,10 +458,10 @@ void SdvnSwitch::sendController(cMessage* msg)  {
                     return;
                 }
             }
-            std::stringstream ss;
-            ss << "Vehicle [" << myId << "] did not find a RSU under Distributed Mode.\n";
-            ss << "SimTime: "<< simTime() << "\n";
-            perror(ss.str().c_str());
+            // If the vehicle cannot find a RSU,
+            // the control message is queued until
+            // a RSU is reached.
+            rsuQueue.push_back(wsm);
         }
     }
 }
@@ -528,6 +539,7 @@ void SdvnSwitch::finish() {
     recordScalar("Dropped by Packet In Overflow", droppedByInOverflow);
     recordScalar("Standby Buffer Size", packetStandbyBuffer.size());
     recordScalar("Packet In Buffer Size", packetInBuffer.size());
+    recordScalar("RSU Queue Size", rsuQueue.size());
 
     if(controllerBeaconEvent->isScheduled()) {
         cancelAndDelete(controllerBeaconEvent);
@@ -535,10 +547,12 @@ void SdvnSwitch::finish() {
         delete controllerBeaconEvent;
     }
 
-    for(auto &packet : packetStandbyBuffer) delete packet; // free packets still in buffer
+    for(auto &packet : packetStandbyBuffer) delete packet;
     packetStandbyBuffer.clear();
-    for(auto &packet : packetInBuffer) delete packet; // free packets still in buffer
+    for(auto &packet : packetInBuffer) delete packet;
     packetInBuffer.clear();
-    for(auto &flow : flowTable) delete flow; // free flows still in table
+    for(auto &control : rsuQueue) delete control;
+    rsuQueue.clear();
+    for(auto &flow : flowTable) delete flow;
     flowTable.clear();
 }

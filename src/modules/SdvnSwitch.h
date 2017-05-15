@@ -52,6 +52,8 @@ class SdvnSwitch : public BaseWaveApplLayer {
         std::vector<AppMessage*> packetInBuffer;
         int maxPacketInBuffer;
 
+        std::vector<WaveShortMessage*> rsuQueue;
+
         std::vector<AppMessage*> packetStandbyBuffer;
         int maxPacketStandbyBuffer;
         double standbyTime;

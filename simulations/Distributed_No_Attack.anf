@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scave:Analysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:scave="http://www.omnetpp.org/omnetpp/scave">
+  <inputs>
+    <inputs name="/sdvn/simulations/results/Distributed_No_Attack-*.vec"/>
+    <inputs name="/sdvn/simulations/results/Distributed_No_Attack-*.sca"/>
+  </inputs>
+  <datasets>
+    <datasets name="dt">
+      <items xsi:type="scave:Group">
+        <items xsi:type="scave:Add" filterPattern="module(*.appl) AND name(&quot;Packet Rate&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Apply" operation="aggregator">
+          <params name="function" value="average"/>
+        </items>
+        <items xsi:type="scave:Apply" operation="timewinavg">
+          <params name="windowSize" value="1"/>
+        </items>
+        <items xsi:type="scave:LineChart"/>
+      </items>
+    </datasets>
+  </datasets>
+  <chartSheets>
+    <chartSheets name="default" charts="//@datasets/@datasets.0/@items.0/@items.3"/>
+  </chartSheets>
+</scave:Analysis>

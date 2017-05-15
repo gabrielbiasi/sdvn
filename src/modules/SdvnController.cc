@@ -237,10 +237,10 @@ void SdvnController::clearFarNeighbors() {
     simtime_t now = simTime();
     // For distributed mode, it is possible a vehicle
     // switch between RSUs. Because of that, the parameter
-    // dropAfter is way more strict, in order to mantain
+    // dropAfter is way more strict, in order to maintain
     // the vehicle over only one RSU management.
     for (auto vehicle : timestamps) {
-        if(now > vehicle.second + 1) {
+        if(now > vehicle.second + 1) { // TODO
             olders.push_back(vehicle.first);
         }
     }
