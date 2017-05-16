@@ -12,7 +12,7 @@
           <params name="function" value="average"/>
         </items>
         <items xsi:type="scave:Apply" operation="timewinavg">
-          <params name="windowSize" value="1"/>
+          <params name="windowSize" value="5"/>
         </items>
         <items xsi:type="scave:LineChart"/>
       </items>

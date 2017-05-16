@@ -368,8 +368,10 @@ void SdvnSwitch::onBeacon(WaveShortMessage* wsm) {
     if(architecture == DISTRIBUTED && !rsuQueue.empty() && sender >= prefixRsuId) {
         // A RSU was found with control messages on rsuQueue on Distributed Mode.
         // Sending right now.
-        for(auto i : rsuQueue) {
-            sendWSM(i);
+        EV_INFO << "Vehicle [" << myId << "]" << " beacon received from RSU with |rsuQueue| = ["<< rsuQueue.size() <<"]. Sending control messages...\n";
+        for(auto msg : rsuQueue) {
+            msg->setRecipientAddress(sender);
+            sendWSM(msg);
         }
         rsuQueue.clear();
     }
@@ -462,6 +464,7 @@ void SdvnSwitch::sendController(cMessage* msg)  {
             // the control message is queued until
             // a RSU is reached.
             rsuQueue.push_back(wsm);
+            EV_INFO << "Vehicle [" << myId << "] sending control message to RsuQueue. Size now:["<< rsuQueue.size() <<"]\n";
         }
     }
 }
