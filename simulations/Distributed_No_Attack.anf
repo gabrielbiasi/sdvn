@@ -12,9 +12,11 @@
           <params name="function" value="average"/>
         </items>
         <items xsi:type="scave:Apply" operation="timewinavg">
-          <params name="windowSize" value="5"/>
+          <params name="windowSize" value="1"/>
         </items>
-        <items xsi:type="scave:LineChart"/>
+        <items xsi:type="scave:LineChart" name="" lineNameFormat="">
+          <properties name="Y.Axis.Max" value="100.0"/>
+        </items>
       </items>
     </datasets>
   </datasets>

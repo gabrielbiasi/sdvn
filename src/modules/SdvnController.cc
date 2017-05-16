@@ -162,7 +162,8 @@ void SdvnController::handleMessage(cMessage *msg) {
             destinationId = cm->getDestinationAddress();
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
 
-            if(architecture == DISTRIBUTED) clearFarNeighbors();
+            if(architecture == DISTRIBUTED)
+                clearFarNeighbors();
 
             if(architecture == CENTRALIZED || (architecture == DISTRIBUTED && findLocalNode(destinationId))) {
                 // Checking if the vehicle is still "alive"
@@ -226,10 +227,8 @@ void SdvnController::finish() {
  */
 
 bool SdvnController::findLocalNode(int id) {
-    for(auto node : graph)
-        if(node.first == id)
-            return true;
-    return false;
+    map<int,vector<int>>::iterator it = graph.find(id);
+    return (it != graph.end());
 }
 
 void SdvnController::clearFarNeighbors() {
@@ -240,7 +239,7 @@ void SdvnController::clearFarNeighbors() {
     // dropAfter is way more strict, in order to maintain
     // the vehicle over only one RSU management.
     for (auto vehicle : timestamps) {
-        if(now > vehicle.second + 1) { // TODO
+        if(now > vehicle.second + 3) { // TODO
             olders.push_back(vehicle.first);
         }
     }

@@ -362,6 +362,7 @@ void SdvnSwitch::onBeacon(WaveShortMessage* wsm) {
     for (auto &i : currentNeighbors) // If neighbor already in the neighbors table, just ignore.
         if (i == sender)
             return;
+
     // Store the new neighbor.
     currentNeighbors.push_back(sender);
 
