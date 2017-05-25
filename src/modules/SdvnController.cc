@@ -261,7 +261,7 @@ int SdvnController::findTarget(int id) {
     for(i = 0; i < numRsu; i++) {
         ss.str("");
         ss << ".rsu[" << i << "].controller";
-        ctr = (SdvnController*) getSystemModule()->getModuleByPath(ss.str().c_str());
+        ctr = dynamic_cast<SdvnController*>(sys->getModuleByPath(ss.str().c_str()));
 
         if(ctr->findLocalNode(id)) { // Vehicle found!
             return (i + prefixRsuId);
