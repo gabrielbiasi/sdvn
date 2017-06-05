@@ -21,6 +21,8 @@ simple SdvnController {
         double dropAfter   = default(10s) @unit(s);
        	double hardTimeout = default(10s) @unit(s);
 		double idleTimeout = default(5s)  @unit(s);
+
+		double checkFlowInterval = default(3s) @unit(s);
         
     gates:
         input inControl;

@@ -12,7 +12,7 @@
           <params name="function" value="average"/>
         </items>
         <items xsi:type="scave:Apply" operation="timewinavg">
-          <params name="windowSize" value="50"/>
+          <params name="windowSize" value="5"/>
         </items>
         <items xsi:type="scave:LineChart" name="Average Packet Rate over Time" lineNameFormat="">
           <properties name="Y.Axis.Max" value="100.0"/>

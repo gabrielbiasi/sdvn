@@ -22,6 +22,9 @@ protected:
     int inControl;
     int outControl;
 
+    cMessage* checkFlow;
+    double checkFlowInterval;
+
     bool debug;
     map<int, vector<int>> graph;
     map<int, simtime_t> timestamps;

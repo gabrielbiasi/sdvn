@@ -34,6 +34,11 @@ void SdvnController::initialize(int stage) {
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
+
+        // Check Flow Event
+        checkFlow = new cMessage("Check Flow", 013);
+        checkFlowInterval = par("checkFlowInterval").doubleValue();
+        //scheduleAt(simTime() + checkFlowInterval, checkFlow);
     }
 }
 
@@ -203,6 +208,10 @@ void SdvnController::handleMessage(cMessage *msg) {
             return;
         }
 
+    } else if(msg->getKind() == 013) {
+        // Check Flow Event!
+
+        scheduleAt(simTime() + checkFlowInterval, checkFlow);
     } else if(msg->isSelfMessage()) {
         EV_INFO << "CONTROLADOR: Self Message\n";
     } else {
@@ -216,6 +225,11 @@ void SdvnController::sendController(cMessage* msg) {
 
 void SdvnController::finish() {
     cSimpleModule::finish();
+    if(checkFlow->isScheduled()) {
+        cancelAndDelete(checkFlow);
+    } else {
+        delete checkFlow;
+    }
     for(auto &j : graph) j.second.clear(); // free neighbors lists
     graph.clear();
     timestamps.clear();
