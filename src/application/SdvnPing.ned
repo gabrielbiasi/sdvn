@@ -25,6 +25,7 @@ simple SdvnPing {
 	    
 		double warmUp = default(0s) @unit(s);
 		double packetInterval = default(1s) @unit(s);
+		int    attackSize = default(25);
     gates:
         output toSwitch;
         input  fromSwitch;

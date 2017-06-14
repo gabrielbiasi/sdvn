@@ -54,6 +54,7 @@ class SdvnPing : public cSimpleModule
     // Attacks Settings
     bool attacker;
     static int victimId; // All attackers will know the victimId
+    int attackSize;
     bool attacking;
     int attackMode;
     double attackerRate;

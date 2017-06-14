@@ -26,6 +26,7 @@ void SdvnPing::initialize(int stage) {
         attackerRate = par("attackerRate").doubleValue();
         startTime = par("startTime").doubleValue();
         duration = par("duration").doubleValue();
+        attackSize = par("attackSize").longValue();
 
         toSwitch = findGate("toSwitch");
         fromSwitch = findGate("fromSwitch");
@@ -58,6 +59,7 @@ void SdvnPing::initialize(int stage) {
                 delete attackEvent;
             }
         }
+        WATCH(victimId);
     }
 }
 
@@ -74,10 +76,19 @@ void SdvnPing::handleMessage(cMessage *msg) {
                    if(attacker && attacking && attackMode == A_DDOS) {
                        sourceId = -171;
                        destinationId = victimId;
-                       repeat = 25;
+                       repeat = attackSize;
                    } else {
                        sourceId = vehicleId;
                        destinationId = getRandomVehicle();
+                       //------------------------------------------
+                       destinationId = vehicleId - 1;
+                       if(destinationId < 0) return;
+
+                       // Check if vehicle is in the simulation
+                       ss << ".vehicle[" << destinationId << "].appl";
+                       cModule* module = getSystemModule()->getModuleByPath(ss.str().c_str());
+                       if(!module) return;
+                       //------------------------------------------
                        repeat = 1;
                    }
 
@@ -162,25 +173,16 @@ void SdvnPing::schedule() {
 }
 
 int SdvnPing::getRandomVehicle() {
-
-    /*destinationId = vehicleId - 1;
-    if(destinationId < 0) return;
-
-    // Check if vehicle is in the simulation
-    ss << ".vehicle[" << destinationId << "].appl";
-    module = getSystemModule()->getModuleByPath(ss.str().c_str());
-    if(!module) return;
-
-    */
-    EV_INFO << "entrou\n";
     int id, size;
-    cModule *sys = getSystemModule(), *vehicle;
-    size = sys->getModuleByPath(".vehicle")->getVectorSize();
+    cModule* vehicle;
+    size = getParentModule()->getVectorSize();
+    size = getParentModule()->getParentModule()->getVectorSize();
+    EV_INFO << "entrou\n";
     EV_INFO << "tamanho: ["<< size <<"] \n";
     while(true) {
-        id = (rand() % size) + 1;
+        id = (int) uniform(0, size);
         EV_INFO << "id: ["<< id <<"] \n";
-        vehicle = sys->getSubmodule(".vehicle", id);
+        vehicle = getSystemModule();
         if (vehicle) {
             EV_INFO << "entrou!\n";
             break;
