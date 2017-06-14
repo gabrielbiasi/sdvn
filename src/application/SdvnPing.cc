@@ -18,6 +18,8 @@
 
 Define_Module(SdvnPing);
 
+int SdvnPing::victimId = NO_VEHICLE;
+
 void SdvnPing::initialize(int stage) {
     if (stage == 0) {
         attackMode = par("attackMode").longValue();
@@ -48,11 +50,11 @@ void SdvnPing::initialize(int stage) {
         attacker = attackMode != 0 && uniform(0,1) < attackerRate;
         if (attacker) {
             attackEvent = new cMessage("Attack", 1);
-            if (simTime() < startTime) {
+            if (simTime() < startTime) { // Vehicle shows up before attack
                 scheduleAt(startTime, attackEvent);
-            } else if (simTime() > startTime && simTime() < startTime + duration) {
+            } else if (simTime() > startTime && simTime() < startTime + duration) { // Vehicle shows up during the attack
                 scheduleAt(simTime()+0.0001, attackEvent);
-            } else {
+            } else { // Vehicle shows up after the attack
                 delete attackEvent;
             }
         }
@@ -63,26 +65,19 @@ void SdvnPing::handleMessage(cMessage *msg) {
     if(msg->isSelfMessage()) {
            AppMessage* packet;
            std::stringstream ss;
-           cModule* module;
-           int destinationId, repeat, sourceId;
+           int sourceId, destinationId, repeat;
 
            switch(msg->getKind()) {
                case 0:
-                   // Send Message
-                   destinationId = vehicleId - 1;
-                   if(destinationId < 0) return;
-
-                   // Check if vehicle is in the simulation
-                   ss << ".vehicle[" << destinationId << "].appl";
-                   module = getSystemModule()->getModuleByPath(ss.str().c_str());
-                   if(!module) return;
-
-                   // checks if perform a flooding attack or not
+                   // Sending Message
+                   // Checks if perform a flooding attack or not
                    if(attacker && attacking && attackMode == A_DDOS) {
                        sourceId = -171;
+                       destinationId = victimId;
                        repeat = 25;
                    } else {
                        sourceId = vehicleId;
+                       destinationId = getRandomVehicle();
                        repeat = 1;
                    }
 
@@ -111,6 +106,9 @@ void SdvnPing::handleMessage(cMessage *msg) {
                case 1: // Start or Stop Attack!
                    if(!attacking) { // Starting attacks
                        attacking = true;
+
+                       if(victimId == NO_VEHICLE) // Initialize if needed
+                           victimId = getRandomVehicle();
 
                        // Stop the message event for black hole and overflow attack
                        if(attackMode == A_BLACK_HOLE || attackMode == A_OVERFLOW) cancelEvent(messagesEvent);
@@ -164,6 +162,16 @@ void SdvnPing::schedule() {
 }
 
 int SdvnPing::getRandomVehicle() {
+
+    /*destinationId = vehicleId - 1;
+    if(destinationId < 0) return;
+
+    // Check if vehicle is in the simulation
+    ss << ".vehicle[" << destinationId << "].appl";
+    module = getSystemModule()->getModuleByPath(ss.str().c_str());
+    if(!module) return;
+
+    */
     EV_INFO << "entrou\n";
     int id, size;
     cModule *sys = getSystemModule(), *vehicle;
@@ -189,8 +197,10 @@ void SdvnPing::recordV() {
 void SdvnPing::finish() {
     cSimpleModule::finish();
 
+    cancelAndDelete(attackEvent);
     cancelAndDelete(messagesEvent);
 
+    recordScalar("Victim ID", victimId);
     recordScalar("Messages Sent", msgSent);
     recordScalar("Messages Received", msgRecv);
 }
