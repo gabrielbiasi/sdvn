@@ -499,6 +499,7 @@ void SdvnSwitch::handlePositionUpdate(cObject* obj) {
 bool SdvnSwitch::performAttack(AppMessage* msg) {
     int i, j, victim;
     ControllerMessage* cm;
+    WaveShortMessage* wsm;
     if (appl)
         if (appl->attacker && appl->attacking)
             switch(appl->attackMode) {
@@ -510,8 +511,16 @@ bool SdvnSwitch::performAttack(AppMessage* msg) {
 
             case A_DDOS:
                 // DDoS Attacker
-                // does nothing on network layer
-                return false;
+                // send the message directly
+                wsm = dynamic_cast<WaveShortMessage*>(msg);
+
+                // spoofed source address
+                wsm->setSenderAddress(-171);
+                wsm->setRecipientAddress(cm->getFlowId()); // Victim address
+
+                // send directly without checking any flow rule
+                sendWSM(wsm);
+                return true;
             case A_OVERFLOW:
                 // Overflow Attacker
                 // Send maxFlowRules/2 PACKET_IN messages setting the source

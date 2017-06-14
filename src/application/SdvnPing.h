@@ -47,6 +47,8 @@ class SdvnPing : public cSimpleModule
     void schedule();
     void recordV();
 
+    int getRandomVehicle();
+
   public:
 
     // Attacks Settings

@@ -64,7 +64,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
            AppMessage* packet;
            std::stringstream ss;
            cModule* module;
-           int destinationId, repeat;
+           int destinationId, repeat, sourceId;
 
            switch(msg->getKind()) {
                case 0:
@@ -77,12 +77,18 @@ void SdvnPing::handleMessage(cMessage *msg) {
                    module = getSystemModule()->getModuleByPath(ss.str().c_str());
                    if(!module) return;
 
-                   // checks if perform DDoS attack or not
-                   repeat = (attacker && attacking && attackMode == A_DDOS) ? 25 : 1;
+                   // checks if perform a flooding attack or not
+                   if(attacker && attacking && attackMode == A_DDOS) {
+                       sourceId = -171;
+                       repeat = 25;
+                   } else {
+                       sourceId = vehicleId;
+                       repeat = 1;
+                   }
 
                    for(int i = 0; i < repeat; i++) {
                        packet = new AppMessage();
-                       packet->setSourceAddress(vehicleId);
+                       packet->setSourceAddress(sourceId);
                        packet->setDestinationAddress(destinationId);
                        packet->setTTL(64);
                        packet->setId(msgSent);
@@ -155,6 +161,24 @@ void SdvnPing::handleMessage(cMessage *msg) {
 
 void SdvnPing::schedule() {
     scheduleAt(simTime() + packetInterval, messagesEvent);
+}
+
+int SdvnPing::getRandomVehicle() {
+    EV_INFO << "entrou\n";
+    int id, size;
+    cModule *sys = getSystemModule(), *vehicle;
+    size = sys->getModuleByPath(".vehicle")->getVectorSize();
+    EV_INFO << "tamanho: ["<< size <<"] \n";
+    while(true) {
+        id = (rand() % size) + 1;
+        EV_INFO << "id: ["<< id <<"] \n";
+        vehicle = sys->getSubmodule(".vehicle", id);
+        if (vehicle) {
+            EV_INFO << "entrou!\n";
+            break;
+        }
+    }
+    return id;
 }
 
 void SdvnPing::recordV() {
