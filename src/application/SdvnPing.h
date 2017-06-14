@@ -18,8 +18,10 @@
 
 #include <omnetpp.h>
 #include "SdvnTypes.h"
+#include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 
 using namespace omnetpp;
+using Veins::TraCIScenarioManagerAccess;
 
 class SdvnPing : public cSimpleModule
 {

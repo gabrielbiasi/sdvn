@@ -16,6 +16,9 @@
 #include "SdvnPing.h"
 #include "messages/AppMessage_m.h"
 
+using namespace std;
+using Veins::TraCIScenarioManagerAccess;
+
 Define_Module(SdvnPing);
 
 int SdvnPing::victimId = NO_VEHICLE;
@@ -173,22 +176,10 @@ void SdvnPing::schedule() {
 }
 
 int SdvnPing::getRandomVehicle() {
-    int id, size;
-    cModule* vehicle;
-    size = getParentModule()->getVectorSize();
-    size = getParentModule()->getParentModule()->getVectorSize();
-    EV_INFO << "entrou\n";
-    EV_INFO << "tamanho: ["<< size <<"] \n";
-    while(true) {
-        id = (int) uniform(0, size);
-        EV_INFO << "id: ["<< id <<"] \n";
-        vehicle = getSystemModule();
-        if (vehicle) {
-            EV_INFO << "entrou!\n";
-            break;
-        }
-    }
-    return id;
+    auto map = TraCIScenarioManagerAccess().get()->getManagedHosts();
+    auto iter = map.begin();
+    std::advance(iter, (int) uniform(0, map.size()));
+    return iter->second->getIndex();
 }
 
 void SdvnPing::recordV() {
