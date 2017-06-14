@@ -52,6 +52,9 @@ void SdvnSwitch::initialize(int stage) {
 
         standbyTime = par("standbyTime").doubleValue();
 
+        numPackets = 0;
+        botFlowId = NO_VEHICLE;
+
         fromApp = findGate("fromApp");
         toApp = findGate("toApp");
 
@@ -134,6 +137,7 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
 
     findHost()->getDisplayString().updateWith("r=16,green");
     EV_INFO << "Vehicle [" << myId << "] SdvnSwitch onData received.\n";
+    numPackets++;
 
     /* Limpeza de Flow Rules vencidas */
     cleanFlowTable();
@@ -169,7 +173,6 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
                         packet->setTTL(packet->getTTL()-1);
                         wsm->setSenderAddress(myId);
                         wsm->setRecipientAddress(cm->getFlowId());
-
                         if(!isVehicle() && cm->getFlowId() >= prefixRsuId) {
                             // I2I
                             EV_INFO << "FORWARD! Sending using Ethernet to RSU[" << cm->getFlowId() << "].\n";
@@ -243,6 +246,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
         nm->setKind(011); // Neighbor Message Kind
         nm->setSourceVehicle(myId);
         nm->setTimestamp(simTime());
+        nm->setNumPackets(numPackets); // statistics to controller
 
         nm->setNeighborsArraySize(currentNeighbors.size());
         for(unsigned int i=0; i < currentNeighbors.size(); i++) {
@@ -256,7 +260,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
         scheduleAt(simTime() + controllerBeaconsInterval, controllerBeaconEvent);
 
         if(!isVehicle()) addRsuNeighbors(); // adds the neighbors RSUs
-
+        numPackets = 0; // Reseting
 
     } else if(msg->getKind() == 013) {
         delete msg;
@@ -511,15 +515,32 @@ bool SdvnSwitch::performAttack(AppMessage* msg) {
 
             case A_DDOS:
                 // DDoS Attacker
-                // send the message directly
+                // Send the message directly
                 wsm = dynamic_cast<WaveShortMessage*>(msg);
 
-                // spoofed source address
+                // Spoofed source address
                 wsm->setSenderAddress(-171);
-                wsm->setRecipientAddress(cm->getFlowId()); // Victim address
 
-                // send directly without checking any flow rule
-                sendWSM(wsm);
+                // Getting a random neighbor to forward the traffic load
+                if(currentNeighbors.size() > 0 && botFlowId == NO_VEHICLE)
+                    botFlowId = currentNeighbors.at(uniform(0,currentNeighbors.size()-1));
+
+                if(botFlowId != NO_VEHICLE) {
+                    // Checking if current neighbor is still reachable
+                    for(int n : currentNeighbors) {
+                        if(botFlowId == n) {
+                            // Victim address
+                            wsm->setRecipientAddress(botFlowId);
+                            // Send directly without checking any flow rule
+                            sendWSM(wsm);
+                            return true;
+                        }
+                    }
+                    // Flow lost, get another vehicle
+                    botFlowId = NO_VEHICLE;
+                }
+                delete wsm;
+
                 return true;
             case A_OVERFLOW:
                 // Overflow Attacker

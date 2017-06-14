@@ -169,6 +169,7 @@ NeighborMessage::NeighborMessage(const char *name, int kind) : ::WaveShortMessag
     this->timestamp = 0;
     neighbors_arraysize = 0;
     this->neighbors = 0;
+    this->numPackets = 0;
 }
 
 NeighborMessage::NeighborMessage(const NeighborMessage& other) : ::WaveShortMessage(other)
@@ -200,6 +201,7 @@ void NeighborMessage::copy(const NeighborMessage& other)
     neighbors_arraysize = other.neighbors_arraysize;
     for (unsigned int i=0; i<neighbors_arraysize; i++)
         this->neighbors[i] = other.neighbors[i];
+    this->numPackets = other.numPackets;
 }
 
 void NeighborMessage::parsimPack(omnetpp::cCommBuffer *b) const
@@ -209,6 +211,7 @@ void NeighborMessage::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->timestamp);
     b->pack(neighbors_arraysize);
     doParsimArrayPacking(b,this->neighbors,neighbors_arraysize);
+    doParsimPacking(b,this->numPackets);
 }
 
 void NeighborMessage::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -224,6 +227,7 @@ void NeighborMessage::parsimUnpack(omnetpp::cCommBuffer *b)
         this->neighbors = new int[neighbors_arraysize];
         doParsimArrayUnpacking(b,this->neighbors,neighbors_arraysize);
     }
+    doParsimUnpacking(b,this->numPackets);
 }
 
 int NeighborMessage::getSourceVehicle() const
@@ -274,6 +278,16 @@ void NeighborMessage::setNeighbors(unsigned int k, int neighbors)
 {
     if (k>=neighbors_arraysize) throw omnetpp::cRuntimeError("Array of size %d indexed by %d", neighbors_arraysize, k);
     this->neighbors[k] = neighbors;
+}
+
+int NeighborMessage::getNumPackets() const
+{
+    return this->numPackets;
+}
+
+void NeighborMessage::setNumPackets(int numPackets)
+{
+    this->numPackets = numPackets;
 }
 
 class NeighborMessageDescriptor : public omnetpp::cClassDescriptor
@@ -340,7 +354,7 @@ const char *NeighborMessageDescriptor::getProperty(const char *propertyname) con
 int NeighborMessageDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 3+basedesc->getFieldCount() : 3;
+    return basedesc ? 4+basedesc->getFieldCount() : 4;
 }
 
 unsigned int NeighborMessageDescriptor::getFieldTypeFlags(int field) const
@@ -355,8 +369,9 @@ unsigned int NeighborMessageDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISARRAY | FD_ISEDITABLE,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<3) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<4) ? fieldTypeFlags[field] : 0;
 }
 
 const char *NeighborMessageDescriptor::getFieldName(int field) const
@@ -371,8 +386,9 @@ const char *NeighborMessageDescriptor::getFieldName(int field) const
         "sourceVehicle",
         "timestamp",
         "neighbors",
+        "numPackets",
     };
-    return (field>=0 && field<3) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<4) ? fieldNames[field] : nullptr;
 }
 
 int NeighborMessageDescriptor::findField(const char *fieldName) const
@@ -382,6 +398,7 @@ int NeighborMessageDescriptor::findField(const char *fieldName) const
     if (fieldName[0]=='s' && strcmp(fieldName, "sourceVehicle")==0) return base+0;
     if (fieldName[0]=='t' && strcmp(fieldName, "timestamp")==0) return base+1;
     if (fieldName[0]=='n' && strcmp(fieldName, "neighbors")==0) return base+2;
+    if (fieldName[0]=='n' && strcmp(fieldName, "numPackets")==0) return base+3;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -397,8 +414,9 @@ const char *NeighborMessageDescriptor::getFieldTypeString(int field) const
         "int",
         "simtime_t",
         "int",
+        "int",
     };
-    return (field>=0 && field<3) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<4) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **NeighborMessageDescriptor::getFieldPropertyNames(int field) const
@@ -455,6 +473,7 @@ std::string NeighborMessageDescriptor::getFieldValueAsString(void *object, int f
         case 0: return long2string(pp->getSourceVehicle());
         case 1: return simtime2string(pp->getTimestamp());
         case 2: return long2string(pp->getNeighbors(i));
+        case 3: return long2string(pp->getNumPackets());
         default: return "";
     }
 }
@@ -472,6 +491,7 @@ bool NeighborMessageDescriptor::setFieldValueAsString(void *object, int field, i
         case 0: pp->setSourceVehicle(string2long(value)); return true;
         case 1: pp->setTimestamp(string2simtime(value)); return true;
         case 2: pp->setNeighbors(i,string2long(value)); return true;
+        case 3: pp->setNumPackets(string2long(value)); return true;
         default: return false;
     }
 }

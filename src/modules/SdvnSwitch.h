@@ -65,6 +65,12 @@ class SdvnSwitch : public BaseWaveApplLayer {
         std::vector<ControllerMessage*> flowTable;
         int maxFlowRules;
 
+        // Information to controller about the traffic
+        int numPackets;
+
+        // The bot will select a neighbor to forward the attack
+        int botFlowId;
+
         // App Gates
         int fromApp;
         int toApp;
@@ -79,7 +85,6 @@ class SdvnSwitch : public BaseWaveApplLayer {
 
         // mini-controller for Distributed Mode
         int architecture;
-
 
         // Scalars
         int droppedRule;

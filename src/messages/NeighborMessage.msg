@@ -8,4 +8,5 @@ message NeighborMessage extends WaveShortMessage {
 	int sourceVehicle;
 	simtime_t timestamp;
     int neighbors[];
+    int numPackets;
 }

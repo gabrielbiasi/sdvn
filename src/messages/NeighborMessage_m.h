@@ -27,6 +27,7 @@
  *     int sourceVehicle;
  *     simtime_t timestamp;
  *     int neighbors[];
+ *     int numPackets;
  * }
  * </pre>
  */
@@ -37,6 +38,7 @@ class NeighborMessage : public ::WaveShortMessage
     ::omnetpp::simtime_t timestamp;
     int *neighbors; // array ptr
     unsigned int neighbors_arraysize;
+    int numPackets;
 
   private:
     void copy(const NeighborMessage& other);
@@ -63,6 +65,8 @@ class NeighborMessage : public ::WaveShortMessage
     virtual unsigned int getNeighborsArraySize() const;
     virtual int getNeighbors(unsigned int k) const;
     virtual void setNeighbors(unsigned int k, int neighbors);
+    virtual int getNumPackets() const;
+    virtual void setNumPackets(int numPackets);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const NeighborMessage& obj) {obj.parsimPack(b);}
