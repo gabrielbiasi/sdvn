@@ -66,7 +66,7 @@ class SdvnSwitch : public BaseWaveApplLayer {
         int maxFlowRules;
 
         // Information to controller about the traffic
-        int numPackets;
+        long numPackets;
 
         // The bot will select a neighbor to forward the attack
         int botFlowId;

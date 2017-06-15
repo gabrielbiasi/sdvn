@@ -83,15 +83,6 @@ void SdvnPing::handleMessage(cMessage *msg) {
                    } else {
                        sourceId = vehicleId;
                        destinationId = getRandomVehicle();
-                       //------------------------------------------
-                       destinationId = vehicleId - 1;
-                       if(destinationId < 0) return;
-
-                       // Check if vehicle is in the simulation
-                       ss << ".vehicle[" << destinationId << "].appl";
-                       cModule* module = getSystemModule()->getModuleByPath(ss.str().c_str());
-                       if(!module) return;
-                       //------------------------------------------
                        repeat = 1;
                    }
 
@@ -193,7 +184,7 @@ void SdvnPing::finish() {
     cancelAndDelete(attackEvent);
     cancelAndDelete(messagesEvent);
 
-    recordScalar("Victim ID", victimId);
+    if(attacker) recordScalar("Victim ID", victimId);
     recordScalar("Messages Sent", msgSent);
     recordScalar("Messages Received", msgRecv);
 }

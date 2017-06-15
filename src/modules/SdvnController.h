@@ -28,6 +28,7 @@ protected:
     bool debug;
     map<int, vector<int>> graph;
     map<int, simtime_t> timestamps;
+    map<int, long> numPackets;
 
     double hardTimeout;
     double idleTimeout;

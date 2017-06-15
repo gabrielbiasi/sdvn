@@ -31,6 +31,7 @@ void SdvnController::initialize(int stage) {
         // Adjacency matrix
         graph = map<int, vector<int>>();
         timestamps = map<int, simtime_t>();
+        numPackets = map<int,long>();
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
@@ -141,6 +142,7 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
     }
     graph[vehicle] = new_neighbors;
     timestamps[vehicle] = m->getTimestamp();
+    numPackets[vehicle] = m->getNumPackets();
 }
 
 
@@ -225,14 +227,11 @@ void SdvnController::sendController(cMessage* msg) {
 
 void SdvnController::finish() {
     cSimpleModule::finish();
-    if(checkFlow->isScheduled()) {
-        cancelAndDelete(checkFlow);
-    } else {
-        delete checkFlow;
-    }
+    cancelAndDelete(checkFlow);
     for(auto &j : graph) j.second.clear(); // free neighbors lists
     graph.clear();
     timestamps.clear();
+    numPackets.clear();
 }
 
 /*
