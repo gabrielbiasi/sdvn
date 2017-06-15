@@ -18,6 +18,7 @@
 #include "veins/modules/application/ieee80211p/BaseWaveApplLayer.h"
 #include "veins/modules/mobility/traci/TraCIMobility.h"
 #include "veins/modules/mobility/traci/TraCICommandInterface.h"
+#include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 
 #include "SdvnTypes.h"
 
@@ -66,6 +67,7 @@ class SdvnSwitch : public BaseWaveApplLayer {
         int maxFlowRules;
 
         // Information to controller about the traffic
+        cOutVector numPacketsV;
         long numPackets;
 
         // The bot will select a neighbor to forward the attack
@@ -115,6 +117,7 @@ class SdvnSwitch : public BaseWaveApplLayer {
         void addRsuNeighbors();
         void sendRSU(WaveShortMessage* msg);
         bool isVehicle();
+        bool hasActiveVehicle();
 };
 
 #endif

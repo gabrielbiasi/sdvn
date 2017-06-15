@@ -16,6 +16,7 @@
 
 using Veins::TraCIMobilityAccess;
 using Veins::AnnotationManagerAccess;
+using Veins::TraCIScenarioManagerAccess;
 
 Define_Module(SdvnSwitch);
 
@@ -52,6 +53,7 @@ void SdvnSwitch::initialize(int stage) {
 
         standbyTime = par("standbyTime").doubleValue();
 
+        numPacketsV.setName("Packets Processed");
         numPackets = 0;
         botFlowId = NO_VEHICLE;
 
@@ -134,8 +136,6 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
         delete wsm;
         return;
     }
-
-    findHost()->getDisplayString().updateWith("r=16,green");
     EV_INFO << "Vehicle [" << myId << "] SdvnSwitch onData received.\n";
     numPackets++;
 
@@ -184,16 +184,16 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
                         }
                         return;
                     case STANDBY:
-                        EV_INFO << "WAIT! Buffering message.\n";
+                        EV_INFO << "STANDBY! Buffering message.\n";
                         if(packetStandbyBuffer.size() >= ((unsigned) maxPacketStandbyBuffer)) {
-                            EV_INFO << "Vehicle [" << myId << "] Wait Buffer Overflow! Dropping packet.\n";
+                            EV_INFO << "Vehicle [" << myId << "] Standby Buffer Overflow! Dropping packet.\n";
                             droppedByStandbyOverflow++;
                             delete packet;
                             return;
                         } else {
                             packetStandbyBuffer.push_back(packet);
-                            EV_INFO << "Vehicle [" << myId << "] Wait Buffer now: [" << packetStandbyBuffer.size() << "]\n";
-                            cMessage* check = new cMessage("Check Wait Buffer", 013);
+                            EV_INFO << "Vehicle [" << myId << "] Standby Buffer now: [" << packetStandbyBuffer.size() << "]\n";
+                            cMessage* check = new cMessage("Check Standby Buffer", 013);
                             scheduleAt(simTime() + standbyTime, check);
                         }
                         return;
@@ -241,6 +241,12 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
     if (msg->getKind() == 010) {
         // Time to send my neighbors!
 
+        // RSU alone on simulation
+        if(!hasActiveVehicle()){
+            cancelEvent(sendBeaconEvt); // Stop beacons
+            return;
+        }
+
         EV_INFO << "Vehicle [" << myId << "] Sending my current neighbors! [";
         NeighborMessage* nm = new NeighborMessage();
         nm->setKind(011); // Neighbor Message Kind
@@ -257,9 +263,11 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 
         sendController(nm);
         currentNeighbors.clear();
+
         scheduleAt(simTime() + controllerBeaconsInterval, controllerBeaconEvent);
 
         if(!isVehicle()) addRsuNeighbors(); // adds the neighbors RSUs
+        numPacketsV.record(numPackets);
         numPackets = 0; // Reseting
 
     } else if(msg->getKind() == 013) {
@@ -387,16 +395,16 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
     int gateId = msg->getArrivalGateId();
 
     if(architecture == DISTRIBUTED && name == "control") {
-        EV_INFO << "lala\n";
+        //EV_INFO << "lala\n";
         WaveShortMessage* wsm = (WaveShortMessage*) msg;
         if(!isVehicle() && gateId != fromController && wsm->getRecipientAddress() == myId) { // RSU just passing message to controller
             send(msg, toController);
-            EV_INFO << "lele\n";
+            //EV_INFO << "lele\n";
         } else if(gateId == fromController && wsm->getRecipientAddress() != myId) { // Controller wants to send a control message
             sendWSM(wsm);
-            EV_INFO << "lili\n";
+            //EV_INFO << "lili\n";
         } else {
-            EV_INFO << "lolo\n";
+            //EV_INFO << "lolo\n";
             if(ControllerMessage* cm = dynamic_cast<ControllerMessage*>(msg)) {
                 onController(cm);
             } else {
@@ -406,25 +414,29 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
         }
     }
     else if (gateId == fromApp) {
-        EV_INFO << "lulu\n";
+        //EV_INFO << "lulu\n";
         onApplication((AppMessage*) msg);
     } else if(name == "control") {
-        EV_INFO << "haha\n";
+        //EV_INFO << "haha\n";
         onController((ControllerMessage*) msg);
     } else if (name == "data" || gateId == fromRsu) {
-        EV_INFO << "hehe\n";
+        //EV_INFO << "hehe\n";
         onData((WaveShortMessage*) msg);
     } else if (name == "beacon") {
-        EV_INFO << "hihi\n";
+        //EV_INFO << "hihi\n";
         onBeacon((WaveShortMessage*) msg);
     } else {
-        EV_INFO << "hoho\n";
+        //EV_INFO << "hoho\n";
         BaseLayer::handleMessage(msg);
     }
 }
 
 bool SdvnSwitch::isVehicle() {
     return (type == std::string("Vehicle"));
+}
+
+bool SdvnSwitch::hasActiveVehicle() {
+    return TraCIScenarioManagerAccess().get()->getManagedHosts().size() > 0;
 }
 
 void SdvnSwitch::sendApplication(AppMessage* msg)  {

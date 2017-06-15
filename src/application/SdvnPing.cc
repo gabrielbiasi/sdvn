@@ -25,6 +25,7 @@ int SdvnPing::victimId = NO_VEHICLE;
 
 void SdvnPing::initialize(int stage) {
     if (stage == 0) {
+
         attackMode = par("attackMode").longValue();
         attackerRate = par("attackerRate").doubleValue();
         startTime = par("startTime").doubleValue();
@@ -44,15 +45,13 @@ void SdvnPing::initialize(int stage) {
         vLatency.setName("RTT");
         vMsgRate.setName("Packet Rate");
 
-        messagesEvent = nullptr;
-        attackEvent = nullptr;
-
         messagesEvent = new cMessage("Send", 0);
         scheduleAt(simTime() + warmUp + uniform(0, 1), messagesEvent);
 
         attacking = false;
         attacker = attackMode != 0 && uniform(0,1) < attackerRate;
         if (attacker) {
+            WATCH(victimId);
             attackEvent = new cMessage("Attack", 1);
             if (simTime() < startTime) { // Vehicle shows up before attack
                 scheduleAt(startTime, attackEvent);
@@ -61,8 +60,10 @@ void SdvnPing::initialize(int stage) {
             } else { // Vehicle shows up after the attack
                 delete attackEvent;
             }
+        } else {
+            attackEvent = nullptr;
         }
-        WATCH(victimId);
+        WATCH(attacker);
     }
 }
 
@@ -102,9 +103,9 @@ void SdvnPing::handleMessage(cMessage *msg) {
                        EV_INFO << "Vehicle [" << vehicleId << "] Sending PING #" << msgSent <<" to Vehicle [" << destinationId << "]\n";
                        send(packet, toSwitch);
 
-                       msgSent++;
+                       if(!attacking) msgSent++; // Do not register while attacking
                    }
-                   recordV();
+                   if(!attacking) recordV(); // Do not register while attacking
                    schedule();
                    break;
 
@@ -121,7 +122,6 @@ void SdvnPing::handleMessage(cMessage *msg) {
 
                    } else { // Stopping attacks
                        attacking = false;
-                       delete attackEvent;
                        if(!messagesEvent->isScheduled()) schedule();
                    }
 
@@ -181,10 +181,21 @@ void SdvnPing::recordV() {
 void SdvnPing::finish() {
     cSimpleModule::finish();
 
-    cancelAndDelete(attackEvent);
-    cancelAndDelete(messagesEvent);
+    if(messagesEvent->isScheduled()) {
+        cancelAndDelete(messagesEvent);
+    } else {
+        delete messagesEvent;
+    }
 
-    if(attacker) recordScalar("Victim ID", victimId);
+    if(attacker) {
+        recordScalar("Victim ID", victimId);
+        if(attackEvent->isScheduled()) {
+            cancelAndDelete(attackEvent);
+        } else {
+            delete attackEvent;
+        }
+    }
+
     recordScalar("Messages Sent", msgSent);
     recordScalar("Messages Received", msgRecv);
 }

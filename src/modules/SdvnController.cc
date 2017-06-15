@@ -31,7 +31,7 @@ void SdvnController::initialize(int stage) {
         // Adjacency matrix
         graph = map<int, vector<int>>();
         timestamps = map<int, simtime_t>();
-        numPackets = map<int,long>();
+        numPackets = map<int,vector<long>>();
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
@@ -142,7 +142,7 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
     }
     graph[vehicle] = new_neighbors;
     timestamps[vehicle] = m->getTimestamp();
-    numPackets[vehicle] = m->getNumPackets();
+    numPackets[vehicle].push_back(m->getNumPackets());
 }
 
 
