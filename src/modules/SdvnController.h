@@ -2,6 +2,7 @@
 #define SdvnController_H
 
 #include <omnetpp.h>
+#include <cmath>
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 #include "veins/modules/mobility/traci/TraCIMobility.h"
 
@@ -28,7 +29,10 @@ protected:
     bool debug;
     map<int, vector<int>> graph;
     map<int, simtime_t> timestamps;
+
     map<int, vector<long>> numPackets;
+    map<int, long> numFlowsCounters;
+    map<int, vector<long>> numFlows;
 
     double hardTimeout;
     double idleTimeout;
@@ -45,6 +49,8 @@ protected:
     void updateNetworkGraph(cMessage* message);
     ControllerMessage* newFlow(int sourceId, int destinationId, int flowAction, int flowDestination);
     int runSimpleDijkstra(int source, int destination);
+
+    double getStdDev(const vector<long>&  li);
 
     void clearFarNeighbors();
 

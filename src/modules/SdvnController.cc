@@ -31,7 +31,10 @@ void SdvnController::initialize(int stage) {
         // Adjacency matrix
         graph = map<int, vector<int>>();
         timestamps = map<int, simtime_t>();
+
+        numFlowsCounters = map<int,long>();
         numPackets = map<int,vector<long>>();
+        numFlows = map<int,vector<long>>();
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
@@ -39,7 +42,7 @@ void SdvnController::initialize(int stage) {
         // Check Flow Event
         checkFlow = new cMessage("Check Flow", 013);
         checkFlowInterval = par("checkFlowInterval").doubleValue();
-        //scheduleAt(simTime() + checkFlowInterval, checkFlow);
+        scheduleAt(simTime() + checkFlowInterval, checkFlow);
     }
 }
 
@@ -143,6 +146,9 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
     graph[vehicle] = new_neighbors;
     timestamps[vehicle] = m->getTimestamp();
     numPackets[vehicle].push_back(m->getNumPackets());
+
+    numFlows[vehicle].push_back(numFlowsCounters[vehicle]);
+    numFlowsCounters[vehicle] = 0;
 }
 
 
@@ -194,6 +200,8 @@ void SdvnController::handleMessage(cMessage *msg) {
                 }
             }
 
+            numFlowsCounters[destinationId]++;
+
             wsm = dynamic_cast<WaveShortMessage*>(flow);
             wsm->addBitLength(256);
             wsm->setChannelNumber(178);
@@ -212,6 +220,11 @@ void SdvnController::handleMessage(cMessage *msg) {
 
     } else if(msg->getKind() == 013) {
         // Check Flow Event!
+        EV_INFO << "Checking Flows!!\n";
+        for(auto n : numFlowsCounters) {
+            EV_INFO << "[" << n.first << "->" << n.second << "] ";
+        }
+        EV_INFO << "\n";
 
         scheduleAt(simTime() + checkFlowInterval, checkFlow);
     } else if(msg->isSelfMessage()) {
@@ -219,6 +232,19 @@ void SdvnController::handleMessage(cMessage *msg) {
     } else {
         EV_INFO << "CONTROLADOR: Something wrong here!\n";
     }
+}
+
+double SdvnController::getStdDev(const vector<long>&  li) {
+    int size = li.size();
+    double sum = 0, mean, stddev = 0;
+    for(auto i : li) {
+        sum += i;
+    }
+    mean = sum/size;
+    for(auto i: li) {
+        stddev += pow(i-mean, 2);
+    }
+    return sqrt(stddev/size);
 }
 
 void SdvnController::sendController(cMessage* msg) {
@@ -232,6 +258,7 @@ void SdvnController::finish() {
     graph.clear();
     timestamps.clear();
     numPackets.clear();
+    numFlows.clear();
 }
 
 /*

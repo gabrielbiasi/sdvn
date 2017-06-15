@@ -22,7 +22,7 @@ simple SdvnController {
        	double hardTimeout = default(10s) @unit(s);
 		double idleTimeout = default(5s)  @unit(s);
 
-		double checkFlowInterval = default(3s) @unit(s);
+		double checkFlowInterval = default(1s) @unit(s);
         
     gates:
         input inControl;
