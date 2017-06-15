@@ -137,103 +137,109 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
         return;
     }
     EV_INFO << "Vehicle [" << myId << "] SdvnSwitch onData received.\n";
-    numPackets++;
 
     /* Limpeza de Flow Rules vencidas */
     cleanFlowTable();
 
     AppMessage* packet = (AppMessage*) wsm;
 
-    /* Attackers Area */
+    // Checking Attacker Actions
     if(performAttack(packet)) return;
 
-    // I am the destination, sending to upper layer.
     if(packet->getDestinationAddress() == myId) {
+        // I am the destination, sending to upper layer.
         EV_INFO << "Vehicle [" << myId << "] onData I am the destination.\n";
+        numPackets++;
         sendApplication(packet);
-    } else {
+        return;
+    }
 
-        // TTL Check.
-        if(packet->getTTL() <= 0) {
-            EV_INFO << "Vehicle [" << myId << "] onData Dropping by TTL.\n";
-            delete packet;
-            droppedByTTL++;
-            return;
-        }
-        EV_INFO << "Vehicle [" << myId << "] Checking Flow Table...\n";
-        // Checking Flow Table
-        for(auto &cm : flowTable) {
-            if(packet->getDestinationAddress() == cm->getDestinationAddress()) { // Flow Match
-                EV_INFO << "Vehicle [" << myId << "] MATCH: ";
-                cm->setLastUsed(simTime()); // Refresh the idle timeout
+    // Checking TTL.
+    if(packet->getTTL() <= 0) {
+        EV_INFO << "Vehicle [" << myId << "] onData Dropping by TTL.\n";
+        delete packet;
+        droppedByTTL++;
+        numPackets++;
+        return;
+    }
 
-                // Perform the Action Flow
-                switch(cm->getFlowAction()) {
-                    case FORWARD:
-                        packet->setTTL(packet->getTTL()-1);
-                        wsm->setSenderAddress(myId);
-                        wsm->setRecipientAddress(cm->getFlowId());
-                        if(!isVehicle() && cm->getFlowId() >= prefixRsuId) {
-                            // I2I
-                            EV_INFO << "FORWARD! Sending using Ethernet to RSU[" << cm->getFlowId() << "].\n";
-                            sendRSU(wsm);
-                        } else {
-                            // V2V or V2I
-                            EV_INFO << "FORWARD! Sending using WAVE to [" << cm->getFlowId() << "].\n";
-                            sendWSM(wsm);
-                        }
-                        return;
-                    case STANDBY:
-                        EV_INFO << "STANDBY! Buffering message.\n";
-                        if(packetStandbyBuffer.size() >= ((unsigned) maxPacketStandbyBuffer)) {
-                            EV_INFO << "Vehicle [" << myId << "] Standby Buffer Overflow! Dropping packet.\n";
-                            droppedByStandbyOverflow++;
-                            delete packet;
-                            return;
-                        } else {
-                            packetStandbyBuffer.push_back(packet);
-                            EV_INFO << "Vehicle [" << myId << "] Standby Buffer now: [" << packetStandbyBuffer.size() << "]\n";
-                            cMessage* check = new cMessage("Check Standby Buffer", 013);
-                            scheduleAt(simTime() + standbyTime, check);
-                        }
-                        return;
-                    case DROP:
-                        EV_INFO << "DROP! message deleted. \n";
-                        droppedByRule++;
-                        delete packet;
-                        return;
-                }
-            }
-        }
+    // Packet is for another vehicle, starting SDN process.
+    EV_INFO << "Vehicle [" << myId << "] Checking Flow Table...\n";
+    // Checking Flow Table
+    for(auto &cm : flowTable) {
+        if(packet->getDestinationAddress() == cm->getDestinationAddress()) { // Flow Match
+            EV_INFO << "Vehicle [" << myId << "] MATCH: ";
+            cm->setLastUsed(simTime()); // Refresh the idle timeout
 
-        EV_INFO << "Vehicle [" << myId << "] MISS! Trying to buffering on Packet In...\n";
-
-        // Packet In Buffer Overflow!
-        if(packetInBuffer.size() >= ((unsigned) maxPacketInBuffer)) {
-            EV_INFO << "Vehicle [" << myId << "] Packet In Buffer Overflow!\n";
-            droppedByInOverflow++;
-            delete packet;
-            return;
-        } else {
-            // The PACKET_IN is sent and the packet and their similar are store in the buffer
-            for(auto &p : packetInBuffer) {
-                if(p->getDestinationAddress() == packet->getDestinationAddress()) {
-                    EV_INFO << "Vehicle [" << myId << "] Similar packet found on Packet In Buffer, just buffering.\n";
-                    packetInBuffer.push_back(packet);
-                    EV_INFO << "Vehicle [" << myId << "] Packet In Buffer Now: " << packetInBuffer.size() << "\n";
+            // Perform the Action Flow
+            switch(cm->getFlowAction()) {
+                case FORWARD:
+                    packet->setTTL(packet->getTTL()-1);
+                    wsm->setSenderAddress(myId);
+                    wsm->setRecipientAddress(cm->getFlowId());
+                    if(!isVehicle() && cm->getFlowId() >= prefixRsuId) {
+                        // I2I
+                        EV_INFO << "FORWARD! Sending using Ethernet to RSU[" << cm->getFlowId() << "].\n";
+                        sendRSU(wsm);
+                        numPackets++;
+                    } else {
+                        // V2V or V2I
+                        EV_INFO << "FORWARD! Sending using WAVE to [" << cm->getFlowId() << "].\n";
+                        sendWSM(wsm);
+                        numPackets++;
+                    }
                     return;
-                }
+                case STANDBY:
+                    EV_INFO << "STANDBY! Buffering message.\n";
+                    if(packetStandbyBuffer.size() >= ((unsigned) maxPacketStandbyBuffer)) {
+                        EV_INFO << "Vehicle [" << myId << "] Standby Buffer Overflow! Dropping packet.\n";
+                        droppedByStandbyOverflow++;
+                        delete packet;
+                        numPackets++;
+                    } else {
+                        packetStandbyBuffer.push_back(packet);
+                        EV_INFO << "Vehicle [" << myId << "] Standby Buffer now: [" << packetStandbyBuffer.size() << "]\n";
+                        cMessage* check = new cMessage("Check Standby Buffer", 013);
+                        scheduleAt(simTime() + standbyTime, check);
+                    }
+                    return;
+                case DROP:
+                    EV_INFO << "DROP! message deleted. \n";
+                    droppedByRule++;
+                    numPackets++;
+                    delete packet;
+                    return;
             }
-            EV_INFO << "Vehicle [" << myId << "] Buffered and sending PACKET_IN to Controller.\n";
-            packetInBuffer.push_back(packet);
-            ControllerMessage* cm = new ControllerMessage();
-            cm->setKind(012); // Controller Message Kind
-            cm->setSourceVehicle(myId);
-            cm->setFlowAction(PACKET_IN);
-            cm->setDestinationAddress(packet->getDestinationAddress());
-            sendController(cm);
         }
     }
+
+    EV_INFO << "Vehicle [" << myId << "] MISS! Trying to buffering on Packet In...\n";
+    if(packetInBuffer.size() >= ((unsigned) maxPacketInBuffer)) {
+        // Packet In Buffer Overflow!
+        EV_INFO << "Vehicle [" << myId << "] Packet In Buffer Overflow!\n";
+        droppedByInOverflow++;
+        numPackets++;
+        delete packet;
+        return;
+    }
+
+    // The PACKET_IN is sent and the packet and their similar are store in the buffer
+    for(auto &p : packetInBuffer) {
+        // Checking for similars...
+        if(p->getDestinationAddress() == packet->getDestinationAddress()) {
+            EV_INFO << "Vehicle [" << myId << "] Similar packet found on Packet In Buffer, just buffering.\n";
+            packetInBuffer.push_back(packet);
+            return;
+        }
+    }
+    EV_INFO << "Vehicle [" << myId << "] Buffered and sending PACKET_IN to Controller.\n";
+    packetInBuffer.push_back(packet);
+    ControllerMessage* cm = new ControllerMessage();
+    cm->setKind(012); // Controller Message Kind
+    cm->setSourceVehicle(myId);
+    cm->setFlowAction(PACKET_IN);
+    cm->setDestinationAddress(packet->getDestinationAddress());
+    sendController(cm);
 }
 
 
