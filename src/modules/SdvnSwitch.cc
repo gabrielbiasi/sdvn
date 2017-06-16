@@ -317,6 +317,10 @@ void SdvnSwitch::onController(ControllerMessage* msg) {
             EV_INFO << "Vehicle [" << myId << "] ControllerMessage DROP!\n";
         }
 
+        /*
+         * TODO Check if a similar flow rule already exists
+         */
+
         flowTable.push_back(msg); // Put the new flow in the table
         msg->setTimestamp(simTime()); // Start timeouts
         msg->setLastUsed(simTime());

@@ -33,19 +33,15 @@ void SdvnController::initialize(int stage) {
         graph = map<int, vector<int>>();
         timestamps = map<int, simtime_t>();
 
+        // Sentinel maps and parameters
         numPackets = map<int,vector<long>>();
         numFlows = map<int,vector<long>>();
         flowMods = map<int,vector<ControllerMessage*>>();
+        flowThreshold = par("flowThreshold").doubleValue();
+        numThreshold = par("numThreshold").doubleValue();
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
-
-        // Check Flow Event
-        if(sentinel) {
-            checkFlow = new cMessage("Check Flow", 013);
-            checkFlowInterval = par("checkFlowInterval").doubleValue();
-            scheduleAt(simTime() + checkFlowInterval, checkFlow);
-        }
     }
 }
 
@@ -148,12 +144,39 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
     }
     graph[vehicle] = new_neighbors;
     timestamps[vehicle] = m->getTimestamp();
-    numPackets[vehicle].push_back(m->getNumPackets());
 
     if(sentinel) {
         // Register the amount of flow rules requested in this window
         // time and release the flow rules to the next window time.
+
+        numPackets[vehicle].push_back(m->getNumPackets());
         numFlows[vehicle].push_back(flowMods[vehicle].size());
+
+        // Phase 1: Detecting the attack
+
+        int lastNumPacket = numPackets[vehicle].back();
+        int lastNumFlow = numFlows[vehicle].back();
+
+        double stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
+        double stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
+
+        // Checking thresholds...
+        if((lastNumPacket < stdDevPacket*numThreshold) // Threshold for packet amount
+                || (lastNumFlow < stdDevFlow*flowThreshold) // Threshold for flow amount
+                || (vehicle >= prefixRsuId) ) return; // Check if is a RSU
+
+        // Phase 2: Mitigating the Attack
+
+        EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
+        EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
+        EV_INFO << "Building flow tree..." << endl;
+
+        recordScalar("Detectation Time", simTime());
+
+        /*
+         * TODO Create flow rule
+         * */
+
         for(auto flow : flowMods[vehicle]) delete flow; // releasing memory
         flowMods[vehicle].clear();
     }
@@ -183,7 +206,7 @@ void SdvnController::handleMessage(cMessage *msg) {
             destinationId = cm->getDestinationAddress();
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
 
-            if(architecture == DISTRIBUTED)
+            if(architecture == DISTRIBUTED) // ???
                 clearFarNeighbors();
 
             if(architecture == CENTRALIZED || (architecture == DISTRIBUTED && findLocalNode(destinationId))) {
@@ -227,16 +250,6 @@ void SdvnController::handleMessage(cMessage *msg) {
             delete msg;
             return;
         }
-
-    } else if(msg->getKind() == 013) {
-        // Check Flow Event!
-        EV_INFO << "Checking Flows!!\n";
-        for(auto n : flowMods) {
-            EV_INFO << "[" << n.first << "->" << n.second.size() << "] ";
-        }
-        EV_INFO << "\n";
-
-        scheduleAt(simTime() + checkFlowInterval, checkFlow);
     } else if(msg->isSelfMessage()) {
         EV_INFO << "CONTROLADOR: Self Message\n";
     } else {
@@ -244,17 +257,17 @@ void SdvnController::handleMessage(cMessage *msg) {
     }
 }
 
-double SdvnController::getStdDev(const vector<long>&  li) {
-    int size = li.size();
-    double sum = 0, mean, stddev = 0;
-    for(auto i : li) {
-        sum += i;
-    }
+double SdvnController::getMeanPlusStdDev(const vector<long>&  li) {
+    // Std Dev code ignoring the last value
+    unsigned int i, size;
+    double sum, mean, stddev;
+    size = li.size() - 1; // last value ignored
+    sum = 0;
+    stddev = 0;
+    for(i = 0; i < size; i++) sum += li[i];
     mean = sum/size;
-    for(auto i: li) {
-        stddev += pow(i-mean, 2);
-    }
-    return sqrt(stddev/size);
+    for(i = 0; i < size; i++) stddev += pow(i-mean, 2);
+    return (mean + sqrt(stddev/size));
 }
 
 void SdvnController::sendController(cMessage* msg) {
@@ -267,7 +280,6 @@ void SdvnController::finish() {
     for(auto &j : graph) j.second.clear(); // free neighbors lists
 
     if(sentinel){
-        cancelAndDelete(checkFlow);
         for(auto vehicle : flowMods) // for all vehicles
             for(auto flow : vehicle.second) // for all flows on each vehicle
                 delete flow;

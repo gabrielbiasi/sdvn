@@ -3,11 +3,6 @@
 
 #include <omnetpp.h>
 #include <cmath>
-#include "veins/modules/mobility/traci/TraCIScenarioManager.h"
-#include "veins/modules/mobility/traci/TraCIMobility.h"
-
-using Veins::TraCIScenarioManager;
-using Veins::TraCIScenarioManagerAccess;
 
 #include "SdvnTypes.h"
 #include "messages/ControllerMessage_m.h"
@@ -23,17 +18,17 @@ protected:
     int inControl;
     int outControl;
 
-    cMessage* checkFlow;
-    double checkFlowInterval;
-
     bool debug;
     map<int, vector<int>> graph;
     map<int, simtime_t> timestamps;
 
+    // Sentinel Variables
     bool sentinel;
     map<int, vector<long>> numPackets;
-    map<int, vector<ControllerMessage*>> flowMods;
     map<int, vector<long>> numFlows;
+    map<int, vector<ControllerMessage*>> flowMods;
+    double flowThreshold;
+    double numThreshold;
 
     double hardTimeout;
     double idleTimeout;
@@ -51,7 +46,7 @@ protected:
     ControllerMessage* newFlow(int sourceId, int destinationId, int flowAction, int flowDestination);
     int runSimpleDijkstra(int source, int destination);
 
-    double getStdDev(const vector<long>&  li);
+    double getMeanPlusStdDev(const vector<long>&  li);
 
     void clearFarNeighbors();
 

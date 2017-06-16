@@ -73,6 +73,8 @@ void SdvnPing::handleMessage(cMessage *msg) {
            std::stringstream ss;
            int sourceId, destinationId, repeat;
 
+           EV_INFO << getParentModule()->getDisplayString() << endl;
+
            switch(msg->getKind()) {
                case 0:
                    // Sending Message
