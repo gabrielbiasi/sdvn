@@ -18,12 +18,14 @@ package sdvn.modules;
 simple SdvnController {
    parameters:
         bool   debug       = default(false);
+        bool   sentinel    = default(true);
+
         double dropAfter   = default(10s) @unit(s);
        	double hardTimeout = default(10s) @unit(s);
 		double idleTimeout = default(5s)  @unit(s);
 
 		double checkFlowInterval = default(1s) @unit(s);
-        
+
     gates:
         input inControl;
         output outControl;

@@ -18,6 +18,7 @@ void SdvnController::initialize(int stage) {
         }
 
         debug = par("debug").boolValue();
+        sentinel = par("sentinel").boolValue();
 
         // Timeouts
         hardTimeout = par("hardTimeout").doubleValue();
@@ -32,17 +33,19 @@ void SdvnController::initialize(int stage) {
         graph = map<int, vector<int>>();
         timestamps = map<int, simtime_t>();
 
-        numFlowsCounters = map<int,long>();
         numPackets = map<int,vector<long>>();
         numFlows = map<int,vector<long>>();
+        flowMods = map<int,vector<ControllerMessage*>>();
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
 
         // Check Flow Event
-        checkFlow = new cMessage("Check Flow", 013);
-        checkFlowInterval = par("checkFlowInterval").doubleValue();
-        scheduleAt(simTime() + checkFlowInterval, checkFlow);
+        if(sentinel) {
+            checkFlow = new cMessage("Check Flow", 013);
+            checkFlowInterval = par("checkFlowInterval").doubleValue();
+            scheduleAt(simTime() + checkFlowInterval, checkFlow);
+        }
     }
 }
 
@@ -147,8 +150,13 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
     timestamps[vehicle] = m->getTimestamp();
     numPackets[vehicle].push_back(m->getNumPackets());
 
-    numFlows[vehicle].push_back(numFlowsCounters[vehicle]);
-    numFlowsCounters[vehicle] = 0;
+    if(sentinel) {
+        // Register the amount of flow rules requested in this window
+        // time and release the flow rules to the next window time.
+        numFlows[vehicle].push_back(flowMods[vehicle].size());
+        for(auto flow : flowMods[vehicle]) delete flow; // releasing memory
+        flowMods[vehicle].clear();
+    }
 }
 
 
@@ -200,7 +208,9 @@ void SdvnController::handleMessage(cMessage *msg) {
                 }
             }
 
-            numFlowsCounters[destinationId]++;
+            // A copy is stored in order to calculate a possible flow tree
+            if(sentinel)
+                flowMods[destinationId].push_back(flow->dup());
 
             wsm = dynamic_cast<WaveShortMessage*>(flow);
             wsm->addBitLength(256);
@@ -221,8 +231,8 @@ void SdvnController::handleMessage(cMessage *msg) {
     } else if(msg->getKind() == 013) {
         // Check Flow Event!
         EV_INFO << "Checking Flows!!\n";
-        for(auto n : numFlowsCounters) {
-            EV_INFO << "[" << n.first << "->" << n.second << "] ";
+        for(auto n : flowMods) {
+            EV_INFO << "[" << n.first << "->" << n.second.size() << "] ";
         }
         EV_INFO << "\n";
 
@@ -253,8 +263,16 @@ void SdvnController::sendController(cMessage* msg) {
 
 void SdvnController::finish() {
     cSimpleModule::finish();
-    cancelAndDelete(checkFlow);
+
     for(auto &j : graph) j.second.clear(); // free neighbors lists
+
+    if(sentinel){
+        cancelAndDelete(checkFlow);
+        for(auto vehicle : flowMods) // for all vehicles
+            for(auto flow : vehicle.second) // for all flows on each vehicle
+                delete flow;
+    }
+
     graph.clear();
     timestamps.clear();
     numPackets.clear();

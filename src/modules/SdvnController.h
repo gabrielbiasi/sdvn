@@ -30,8 +30,9 @@ protected:
     map<int, vector<int>> graph;
     map<int, simtime_t> timestamps;
 
+    bool sentinel;
     map<int, vector<long>> numPackets;
-    map<int, long> numFlowsCounters;
+    map<int, vector<ControllerMessage*>> flowMods;
     map<int, vector<long>> numFlows;
 
     double hardTimeout;
