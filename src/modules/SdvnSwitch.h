@@ -26,6 +26,7 @@
 #include "messages/ControllerMessage_m.h"
 #include "messages/NeighborMessage_m.h"
 #include "application/SdvnPing.h"
+#include "modules/SdvnController.h"
 
 using Veins::TraCIMobility;
 using Veins::TraCICommandInterface;
@@ -68,6 +69,7 @@ class SdvnSwitch : public BaseWaveApplLayer {
 
         // Information to controller about the traffic
         cOutVector numPacketsV;
+        cOutVector numFlowsV;
         long numPackets;
 
         // The bot will select a neighbor to forward the attack

@@ -26,7 +26,7 @@ protected:
     bool sentinel;
     map<int, vector<long>> numPackets;
     map<int, vector<long>> numFlows;
-    map<int, vector<ControllerMessage*>> flowMods;
+
     double flowThreshold;
     double numThreshold;
 
@@ -53,6 +53,7 @@ protected:
 public:
     int findTarget(int id);
     bool findLocalNode(int id);
+    map<int, vector<ControllerMessage*>> flowMods;
 };
 
 #endif

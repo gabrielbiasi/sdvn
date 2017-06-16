@@ -228,6 +228,7 @@ $O/modules/SdvnSwitch.o: modules/SdvnSwitch.cc \
 	messages/AppMessage_m.h \
 	messages/ControllerMessage_m.h \
 	messages/NeighborMessage_m.h \
+	modules/SdvnController.h \
 	modules/SdvnSwitch.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/ChannelAccess.h \

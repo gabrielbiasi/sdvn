@@ -161,21 +161,22 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
         double stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
 
         // Checking thresholds...
-        if((lastNumPacket < stdDevPacket*numThreshold) // Threshold for packet amount
-                || (lastNumFlow < stdDevFlow*flowThreshold) // Threshold for flow amount
-                || (vehicle >= prefixRsuId) ) return; // Check if is a RSU
+        if((lastNumPacket > stdDevPacket*numThreshold) // Threshold for packet amount
+                && (lastNumFlow > stdDevFlow*flowThreshold) // Threshold for flow amount
+                && (vehicle < prefixRsuId) ) { // Check if is a RSU
 
-        // Phase 2: Mitigating the Attack
+            // Phase 2: Mitigating the Attack
 
-        EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
-        EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
-        EV_INFO << "Building flow tree..." << endl;
+            EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
+            EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
+            EV_INFO << "Building flow tree..." << endl;
 
-        recordScalar("Detectation Time", simTime());
+            recordScalar("Detectation Time", simTime());
 
-        /*
-         * TODO Create flow rule
-         * */
+            /*
+             * TODO Create flow rule
+             * */
+        }
 
         for(auto flow : flowMods[vehicle]) delete flow; // releasing memory
         flowMods[vehicle].clear();

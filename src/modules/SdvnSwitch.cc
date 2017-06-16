@@ -54,6 +54,7 @@ void SdvnSwitch::initialize(int stage) {
         standbyTime = par("standbyTime").doubleValue();
 
         numPacketsV.setName("Packets Processed");
+        numFlowsV.setName("Flows Generated");
         numPackets = 0;
         botFlowId = NO_VEHICLE;
 
@@ -86,6 +87,7 @@ void SdvnSwitch::initialize(int stage) {
         droppedByStandbyOverflow = 0;
         droppedByInOverflow = 0;
         WATCH(myId);
+        WATCH(botFlowId);
     }
 }
 
@@ -177,14 +179,19 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
                     packet->setTTL(packet->getTTL()-1);
                     wsm->setSenderAddress(myId);
                     wsm->setRecipientAddress(cm->getFlowId());
+                    EV_INFO << "Packet [" << packet->getSourceAddress();
+                    EV_INFO << "->";
+                    EV_INFO << packet->getDestinationAddress();
+                    EV_INFO << "] ";
+                    EV_INFO << "FORWARD! Sending using ";
                     if(!isVehicle() && cm->getFlowId() >= prefixRsuId) {
                         // I2I
-                        EV_INFO << "FORWARD! Sending using Ethernet to RSU[" << cm->getFlowId() << "].\n";
+                        EV_INFO << "Ethernet to RSU[" << cm->getFlowId() << "].\n";
                         sendRSU(wsm);
                         numPackets++;
                     } else {
                         // V2V or V2I
-                        EV_INFO << "FORWARD! Sending using WAVE to [" << cm->getFlowId() << "].\n";
+                        EV_INFO << "WAVE to [" << cm->getFlowId() << "].\n";
                         sendWSM(wsm);
                         numPackets++;
                     }
@@ -274,6 +281,11 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 
         if(!isVehicle()) addRsuNeighbors(); // adds the neighbors RSUs
         numPacketsV.record(numPackets);
+
+        int fuu;
+        SdvnController* c = dynamic_cast<SdvnController*>(getSystemModule()->getModuleByPath(".controller"));
+        fuu = c->flowMods[myId].size();
+        numFlowsV.record(fuu);
         numPackets = 0; // Reseting
 
     } else if(msg->getKind() == 013) {
@@ -536,21 +548,29 @@ bool SdvnSwitch::performAttack(AppMessage* msg) {
                 return true;
 
             case A_DDOS:
+                // If the message was not generate by me,
+                // return false in order to process normally
+                // and behaves like a normal vehicle.
+                if(msg->getSourceAddress() != myId) return false;
+
                 // DDoS Attacker
                 // Send the message directly
                 wsm = dynamic_cast<WaveShortMessage*>(msg);
 
                 // Spoofed source address
-                wsm->setSenderAddress(-171);
+                msg->setSourceAddress(-171); // spoofing on app layer
+                wsm->setSenderAddress(-171); // spoofing on net layer
 
                 // Getting a random neighbor to forward the traffic load
-                if(currentNeighbors.size() > 0 && botFlowId == NO_VEHICLE)
-                    botFlowId = currentNeighbors.at(uniform(0,currentNeighbors.size()-1));
+                if(currentNeighbors.size() > 0 && botFlowId == NO_VEHICLE) {
+                    botFlowId = currentNeighbors.at(intuniform(0,currentNeighbors.size()-1));
+                }
 
                 if(botFlowId != NO_VEHICLE) {
                     // Checking if current neighbor is still reachable
                     for(int n : currentNeighbors) {
                         if(botFlowId == n) {
+                            EV_INFO << "Vehicle [" << myId << "] sending attack burst via [" << botFlowId <<"]\n";
                             // Victim address
                             wsm->setRecipientAddress(botFlowId);
                             // Send directly without checking any flow rule

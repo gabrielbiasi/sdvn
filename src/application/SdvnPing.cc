@@ -71,27 +71,24 @@ void SdvnPing::handleMessage(cMessage *msg) {
     if(msg->isSelfMessage()) {
            AppMessage* packet;
            std::stringstream ss;
-           int sourceId, destinationId, repeat;
-
-           EV_INFO << getParentModule()->getDisplayString() << endl;
+           int destinationId, repeat;
 
            switch(msg->getKind()) {
                case 0:
                    // Sending Message
                    // Checks if perform a flooding attack or not
                    if(attacker && attacking && attackMode == A_DDOS) {
-                       sourceId = -171;
+                       // Source address will be spoofed on switch module
                        destinationId = victimId;
                        repeat = attackSize;
                    } else {
-                       sourceId = vehicleId;
                        destinationId = getRandomVehicle();
                        repeat = 1;
                    }
 
                    for(int i = 0; i < repeat; i++) {
                        packet = new AppMessage();
-                       packet->setSourceAddress(sourceId);
+                       packet->setSourceAddress(vehicleId);
                        packet->setDestinationAddress(destinationId);
                        packet->setTTL(64);
                        packet->setId(msgSent);
@@ -171,7 +168,7 @@ void SdvnPing::schedule() {
 int SdvnPing::getRandomVehicle() {
     auto map = TraCIScenarioManagerAccess().get()->getManagedHosts();
     auto iter = map.begin();
-    std::advance(iter, (int) uniform(0, map.size()));
+    std::advance(iter, intuniform(0, map.size()-1));
     return iter->second->getIndex();
 }
 
