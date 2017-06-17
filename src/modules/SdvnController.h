@@ -26,6 +26,7 @@ protected:
     bool sentinel;
     map<int, vector<long>> numPackets;
     map<int, vector<long>> numFlows;
+    map<int, vector<long>> flowTree;
 
     long checkLast;
     double flowThreshold;
@@ -47,8 +48,9 @@ protected:
     ControllerMessage* newFlow(int sourceId, int destinationId, int flowAction, int flowDestination);
     int runSimpleDijkstra(int source, int destination);
 
+    void executeSentinel(int vehicle);
     double getMeanPlusStdDev(const vector<long>&  li);
-    void buildFlowTree(int vehicle, map<int,vector<int>>& tree) ;
+    void buildFlowTree(int victim);
 
     void clearFarNeighbors();
 

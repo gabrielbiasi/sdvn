@@ -290,7 +290,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 
     } else if(msg->getKind() == 013) {
         delete msg;
-        EV_INFO << "Vehicle [" << myId << "] Recovering packet on Standby Buffer!";
+        EV_INFO << "Vehicle [" << myId << "] Recovering packet on Standby Buffer!\n";
 
         AppMessage* packet = *(packetStandbyBuffer.begin());
         packetStandbyBuffer.erase(packetStandbyBuffer.begin());

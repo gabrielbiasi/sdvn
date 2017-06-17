@@ -18,7 +18,8 @@ enum ARCHITECTURE {
 enum ACTIONS {
     FORWARD = 0,
     DROP = 1,
-    STANDBY = 2
+    STANDBY = 2,
+    S_DROP = 3
 };
 
 enum ATTACKS {

@@ -69,107 +69,114 @@ void SdvnPing::initialize(int stage) {
 
 void SdvnPing::handleMessage(cMessage *msg) {
     if(msg->isSelfMessage()) {
-           AppMessage* packet;
-           std::stringstream ss;
-           int destinationId, repeat;
+        cModule* vehicle;
+        AppMessage* packet;
+        std::stringstream ss;
+        int destinationId, repeat;
 
-           switch(msg->getKind()) {
-               case 0:
-                   // Sending Message
-                   // Checks if perform a flooding attack or not
-                   if(attacker && attacking && attackMode == A_DDOS) {
-                       // Source address will be spoofed on switch module
-                       destinationId = victimId;
-                       repeat = attackSize;
-                   } else {
-                       destinationId = getRandomVehicle();
-                       repeat = 1;
-                   }
+        switch(msg->getKind()) {
+        case 0:
+            // Sending Message
+            // Checks if perform a flooding attack or not
+            if(attacker && attacking && attackMode == A_DDOS) {
+                // Source address will be spoofed on switch module
+                destinationId = victimId;
+                repeat = attackSize;
+            } else {
+                destinationId = getRandomVehicle()->getIndex();
+                repeat = 1;
+            }
 
-                   for(int i = 0; i < repeat; i++) {
-                       packet = new AppMessage();
-                       packet->setSourceAddress(vehicleId);
-                       packet->setDestinationAddress(destinationId);
-                       packet->setTTL(64);
-                       packet->setId(msgSent);
+            for(int i = 0; i < repeat; i++) {
+                packet = new AppMessage();
+                packet->setSourceAddress(vehicleId);
+                packet->setDestinationAddress(destinationId);
+                packet->setTTL(64);
+                packet->setId(msgSent);
 
-                       // Payload
-                       ss.str("");
-                       ss << "PING Hello!";
-                       packet->setPayload(ss.str().c_str());
+                // Payload
+                ss.str("");
+                ss << "PING Hello!";
+                packet->setPayload(ss.str().c_str());
 
-                       // Sending message
-                       EV_INFO << "Vehicle [" << vehicleId << "] Sending PING #" << msgSent <<" to Vehicle [" << destinationId << "]\n";
-                       send(packet, toSwitch);
-
-                       if(!attacking) msgSent++; // Do not register while attacking
-                   }
-                   if(!attacking) recordV(); // Do not register while attacking
-                   schedule();
-                   break;
-
-               case 1: // Start or Stop Attack!
-                   if(!attacking) { // Starting attacks
-                       attacking = true;
-
-                       if(victimId == NO_VEHICLE) // Initialize if needed
-                           victimId = getRandomVehicle();
-
-                       // Stop the message event for black hole and overflow attack
-                       if(attackMode == A_BLACK_HOLE || attackMode == A_OVERFLOW) cancelEvent(messagesEvent);
-                       scheduleAt(startTime + duration + 0.1, attackEvent);
-
-                   } else { // Stopping attacks
-                       attacking = false;
-                       if(!messagesEvent->isScheduled()) schedule();
-                   }
-
-                   break;
-           }
-       } else if (msg->getArrivalGateId() == fromSwitch) {
-           // Message received from switch.
-           AppMessage* packet = (AppMessage*) msg;
-           int packetId = packet->getId();
-           int senderId = packet->getSourceAddress();
-           std::string s = std::string(packet->getPayload());
-           if(s.find("PING") != std::string::npos) {
-               // PING received from a vehicle. Sending PONG.
-               EV_INFO << "Vehicle [" << vehicleId << "] PING #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
-               EV_INFO << "Vehicle [" << vehicleId << "] Sending PONG...\n";
-
-               packet->setSourceAddress(vehicleId);
-               packet->setDestinationAddress(senderId);
-               packet->setTTL(64);
-
-                s.replace(0, 4, "PONG");
-                packet->setPayload(s.c_str());
-
+                // Sending message
+                EV_INFO << "Vehicle [" << vehicleId << "] Sending PING #" << msgSent <<" to Vehicle [" << destinationId << "]\n";
                 send(packet, toSwitch);
 
-          } else if(s.find("PONG") != std::string::npos) {
-              // PONG received from a vehicle. Registering statistics.
-              simtime_t latency = simTime()-packet->getTimestamp();
-              vLatency.record(latency);
-              EV_INFO << "Vehicle [" << vehicleId << "] PONG #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
-              EV_INFO << "Vehicle [" << vehicleId << "] RTT: " << latency << ".\n";
-              msgRecv++;
-              delete packet;
-          } else {
-              EV_INFO << "Something wrong!!";
-              ASSERT(false);
-          }
-       }
+                if(!attacking) msgSent++; // Do not register while attacking
+            }
+            if(!attacking) recordV(); // Do not register while attacking
+            schedule();
+            break;
+
+        case 1: // Start or Stop Attack!
+            if(!attacking) { // Starting attacks
+                attacking = true;
+
+                if(victimId == NO_VEHICLE) { // Initialize if needed
+                    do {
+                        // The vehicle cannot be an attacker
+                        vehicle = getRandomVehicle();
+                        victimId = vehicle->getIndex();
+                    } while(((SdvnPing*)vehicle->getModuleByPath(".appl"))->attacker);
+                }
+
+                // Stop the message event for black hole and overflow attack
+                if(attackMode == A_BLACK_HOLE || attackMode == A_OVERFLOW) cancelEvent(messagesEvent);
+                scheduleAt(startTime + duration + 0.1, attackEvent);
+
+            } else { // Stopping attacks
+                attacking = false;
+                if(!messagesEvent->isScheduled()) schedule();
+            }
+
+            break;
+        }
+    } else if (msg->getArrivalGateId() == fromSwitch) {
+        // Message received from switch.
+        AppMessage* packet = (AppMessage*) msg;
+        int packetId = packet->getId();
+        int senderId = packet->getSourceAddress();
+        std::string s = std::string(packet->getPayload());
+
+        if(s.find("PING") != std::string::npos) {
+            // PING received from a vehicle. Sending PONG.
+            EV_INFO << "Vehicle [" << vehicleId << "] PING #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
+            EV_INFO << "Vehicle [" << vehicleId << "] Sending PONG...\n";
+
+            packet->setSourceAddress(vehicleId);
+            packet->setDestinationAddress(senderId);
+            packet->setTTL(64);
+
+            s.replace(0, 4, "PONG");
+            packet->setPayload(s.c_str());
+
+            send(packet, toSwitch);
+
+        } else if(s.find("PONG") != std::string::npos) {
+            // PONG received from a vehicle. Registering statistics.
+            simtime_t latency = simTime()-packet->getTimestamp();
+            vLatency.record(latency);
+            EV_INFO << "Vehicle [" << vehicleId << "] PONG #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
+            EV_INFO << "Vehicle [" << vehicleId << "] RTT: " << latency << ".\n";
+            msgRecv++;
+            delete packet;
+        } else {
+            EV_INFO << "Something wrong!!";
+            ASSERT(false);
+        }
+    }
 }
 
 void SdvnPing::schedule() {
     scheduleAt(simTime() + packetInterval, messagesEvent);
 }
 
-int SdvnPing::getRandomVehicle() {
+cModule* SdvnPing::getRandomVehicle() {
     auto map = TraCIScenarioManagerAccess().get()->getManagedHosts();
     auto iter = map.begin();
     std::advance(iter, intuniform(0, map.size()-1));
-    return iter->second->getIndex();
+    return iter->second;
 }
 
 void SdvnPing::recordV() {

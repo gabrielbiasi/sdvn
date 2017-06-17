@@ -49,7 +49,7 @@ class SdvnPing : public cSimpleModule
     void schedule();
     void recordV();
 
-    int getRandomVehicle();
+    cModule* getRandomVehicle();
 
   public:
 
@@ -62,7 +62,6 @@ class SdvnPing : public cSimpleModule
     double attackerRate;
     double startTime;
     double duration;
-
 };
 
 #endif

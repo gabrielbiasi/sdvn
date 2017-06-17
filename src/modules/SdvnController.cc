@@ -37,6 +37,8 @@ void SdvnController::initialize(int stage) {
         numPackets = map<int,vector<long>>();
         numFlows = map<int,vector<long>>();
         flowMods = map<int,vector<ControllerMessage*>>();
+        flowTree = map<int,vector<long>>();
+
         flowThreshold = par("flowThreshold").doubleValue();
         numThreshold = par("numThreshold").doubleValue();
         checkLast = par("checkLast").longValue();
@@ -121,6 +123,8 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
 
 ControllerMessage* SdvnController::newFlow(int sourceId, int destinationId, int flowAction, int flowDestination) {
     ControllerMessage* flow = new ControllerMessage();
+    WaveShortMessage* wsm = dynamic_cast<WaveShortMessage*>(flow);
+
     flow->setName("control");
     flow->setMessageType(FLOW_MOD);
     flow->setSourceVehicle(sourceId);
@@ -129,81 +133,115 @@ ControllerMessage* SdvnController::newFlow(int sourceId, int destinationId, int 
     flow->setFlowId(flowDestination);
     flow->setHardTimeout(hardTimeout);
     flow->setIdleTimeout(idleTimeout);
+
+    wsm->addBitLength(256);
+    wsm->setChannelNumber(178);
+    wsm->setPsid(0);
+    wsm->setPriority(2);
+    wsm->setWsmVersion(1);
+    wsm->setTimestamp(simTime());
+    wsm->setSerial(0);
+
     return flow;
 }
 
 void SdvnController::updateNetworkGraph(cMessage* message) {
-    int vehicle, lastNumPacket, lastNumFlow;
-    double stdDevPacket, stdDevFlow;
-    NeighborMessage* m;
+    int vehicle;
+    NeighborMessage* nm;
     vector<int> new_neighbors;
 
-    m = (NeighborMessage*) message;
-    vehicle = m->getSourceVehicle();
+    nm = (NeighborMessage*) message;
+    vehicle = nm->getSourceVehicle();
     if(graph.find(vehicle) != graph.end()) graph.erase(vehicle);
 
     new_neighbors = vector<int>();
-    for(unsigned int i = 0; i < m->getNeighborsArraySize(); i++) {
+    for(unsigned int i = 0; i < nm->getNeighborsArraySize(); i++) {
         // put the neighbors in the new vector
-        new_neighbors.push_back(m->getNeighbors(i));
+        new_neighbors.push_back(nm->getNeighbors(i));
     }
     graph[vehicle] = new_neighbors;
-    timestamps[vehicle] = m->getTimestamp();
+    timestamps[vehicle] = nm->getTimestamp();
 
     if(sentinel) {
-        // Register the amount of flow rules requested in this window
-        // time and release the flow rules to the next window time.
-
-        // Add the new values
-        numPackets[vehicle].push_back(m->getNumPackets());
+        numPackets[vehicle].push_back(nm->getNumPackets());
         numFlows[vehicle].push_back(flowMods[vehicle].size());
+        executeSentinel(vehicle);
+    }
+}
 
-        // If we do not have "checkLast" values to work, just ignore.
-        if(numPackets[vehicle].size() > checkLast && numFlows[vehicle].size() > checkLast) {
+void SdvnController::executeSentinel(int vehicle) {
+    int lastNumPacket, lastNumFlow;
+    double stdDevPacket, stdDevFlow;
+    ControllerMessage* cm, new_flow;
 
-            // Removing the firsts
-            numPackets[vehicle].erase(numPackets[vehicle].begin());
-            numFlows[vehicle].erase(numFlows[vehicle].begin());
+    // Register the amount of flow rules requested in this window
+    // time and release the flow rules to the next window time.
+    // If we do not have "checkLast" values to work, just ignore.
+    if(numPackets[vehicle].size() > checkLast && numFlows[vehicle].size() > checkLast) {
+
+        // Removing the firsts
+        numPackets[vehicle].erase(numPackets[vehicle].begin());
+        numFlows[vehicle].erase(numFlows[vehicle].begin());
+
+        /*
+         * Phase 1: Detecting the attack
+         */
+
+        lastNumPacket = numPackets[vehicle].back();
+        lastNumFlow = numFlows[vehicle].back();
+        stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
+        stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
+
+        // Checking thresholds...
+        if((lastNumPacket > stdDevPacket*numThreshold) // Threshold for packet amount
+                && (lastNumFlow > stdDevFlow*flowThreshold) // Threshold for flow amount
+                && (vehicle < prefixRsuId) ) { // Check if is a RSU
+
+            if(simTime() > 45.0) {
+                recordScalar("lastNumPacket", lastNumPacket);
+                recordScalar("lastNumFlow", lastNumFlow);
+                recordScalar("stdDevPacket", stdDevPacket*numThreshold);
+                recordScalar("stdDevFlow", stdDevFlow*flowThreshold);
+            }
 
             /*
-             * Phase 1: Detecting the attack
+             * Phase 2: Mitigating the Attack
              */
 
-            lastNumPacket = numPackets[vehicle].back();
-            lastNumFlow = numFlows[vehicle].back();
-            stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
-            stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
+            EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
+            EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
+            EV_INFO << "Building flow tree..." << endl;
 
-            // Checking thresholds...
-            if((lastNumPacket > stdDevPacket*numThreshold) // Threshold for packet amount
-                    && (lastNumFlow > stdDevFlow*flowThreshold) // Threshold for flow amount
-                    && (vehicle < prefixRsuId) ) { // Check if is a RSU
+            recordScalar("Detectation Time", simTime());
 
-                if(simTime() > 45.0) {
-                    recordScalar("lastNumPacket", lastNumPacket);
-                    recordScalar("lastNumFlow", lastNumFlow);
-                    recordScalar("stdDevPacket", stdDevPacket*numThreshold);
-                    recordScalar("stdDevFlow", stdDevFlow*flowThreshold);
-                }
-
-                /*
-                 * Phase 2: Mitigating the Attack
-                 */
-
-                EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
-                EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
-                EV_INFO << "Building flow tree..." << endl;
-
-                recordScalar("Detectation Time", simTime());
-
-                /*
-                 * TODO Create flow rule
-                 * */
+            for(auto aa : flowMods[vehicle]) {
+                std::cout << "[" << aa->getSourceVehicle() << "->" << aa->getDestinationAddress();
+                std::cout << "] via [" << aa->getFlowId() << "], type [" << aa->getFlowAction();
+                std::cout << "] created: [" << aa->getTimestamp() << "]\n";
             }
+
+            buildFlowTree(vehicle);
+
+            for(auto aa : flowTree) {
+                std::cout << "[";
+                for(auto bb : aa.second) {
+                    std::cout << bb << ", ";
+                }
+                std::cout << "]\n";
+            }
+
+            /*
+             * TODO Create flow rule
+             *
+            for(;;) {
+                new_flow = newFlow(vehicle, vehicle, S_DROP, NO_VEHICLE);
+                sendController(new_flow);
+            }*/
         }
-        for(auto flow : flowMods[vehicle]) delete flow; // releasing memory
-        flowMods[vehicle].clear();
     }
+    // releasing memory
+    for(auto flow : flowMods[vehicle]) delete flow;
+    flowMods[vehicle].clear();
 }
 
 
@@ -230,7 +268,7 @@ void SdvnController::handleMessage(cMessage *msg) {
             destinationId = cm->getDestinationAddress();
             EV_INFO << "SDVN Controller:  Packet In Received from ["<< sourceId << "]\n";
 
-            if(architecture == DISTRIBUTED) // ???
+            if(architecture == DISTRIBUTED)
                 clearFarNeighbors();
 
             if(architecture == CENTRALIZED || (architecture == DISTRIBUTED && findLocalNode(destinationId))) {
@@ -255,20 +293,24 @@ void SdvnController::handleMessage(cMessage *msg) {
                 }
             }
 
-            // A copy is stored in order to calculate a possible flow tree
-            if(sentinel)
-                flowMods[destinationId].push_back(flow->dup());
-
+            // Sender and Recipient values is used on Distributed Mode
             wsm = dynamic_cast<WaveShortMessage*>(flow);
-            wsm->addBitLength(256);
-            wsm->setChannelNumber(178);
-            wsm->setPsid(0);
-            wsm->setPriority(2);
-            wsm->setWsmVersion(1);
-            wsm->setTimestamp(simTime());
             wsm->setSenderAddress(myId);
             wsm->setRecipientAddress(sourceId);
-            wsm->setSerial(0);
+
+            // A copy is stored in order to calculate a possible flow tree
+            if(sentinel) {
+                auto it = flowMods[destinationId].begin();
+                while(it != flowMods[destinationId].end()) {
+                    if(flow->getSourceVehicle() == (*it)->getSourceVehicle()) {
+                        delete *it;
+                        flowMods[destinationId].erase(it);
+                        break;
+                    }
+                    it++;
+                }
+                flowMods[destinationId].push_back(flow->dup());
+            }
 
             sendController(flow);
             delete msg;
@@ -315,8 +357,34 @@ void SdvnController::finish() {
     numFlows.clear();
 }
 
-void SdvnController::buildFlowTree(int vehicle, map<int,vector<int>> &tree) {
-    return;
+void SdvnController::buildFlowTree(int victim) {
+    int i, counter, vehicle;
+    vector<long> stack = vector<long>();
+
+    flowTree.clear();
+    flowTree[0].push_back(victim);
+    stack.push_back(victim);
+    i = 1;
+    counter = 1;
+
+    while(!stack.empty()) {
+        vehicle = stack.front();
+        stack.erase(stack.begin());
+
+        for(auto flow : flowMods[victim]) {
+            if(flow->getFlowId() == vehicle
+                    && flow->getDestinationAddress() == victim
+                    && flow->getFlowAction() == FORWARD) {
+                flowTree[i].push_back(flow->getSourceVehicle());
+                stack.push_back(flow->getSourceVehicle());
+            }
+        }
+        counter--;
+        if(counter == 0) {
+            counter = flowTree[i].size();
+            i++;
+        }
+    }
 }
 
 /*
