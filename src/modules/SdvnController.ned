@@ -24,6 +24,7 @@ simple SdvnController {
 		double hardTimeout   = default(10s) @unit(s);
 		double idleTimeout   = default(5s)  @unit(s);
 
+		int    checkLast     = default(10);
 		double flowThreshold = default(1.5);
 		double numThreshold  = default(1.5);
 

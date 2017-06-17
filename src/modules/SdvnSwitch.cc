@@ -329,9 +329,17 @@ void SdvnSwitch::onController(ControllerMessage* msg) {
             EV_INFO << "Vehicle [" << myId << "] ControllerMessage DROP!\n";
         }
 
-        /*
-         * TODO Check if a similar flow rule already exists
-         */
+        // Looking for a similar flow rule in flow table
+        auto flow = flowTable.begin();
+        while(flow != flowTable.end()) {
+            if((*flow)->getDestinationAddress() == msg->getDestinationAddress()) {
+                EV_INFO << "Vehicle [" << myId << "] Similar flow rule found on flow table and it was replaced.\n";
+                delete *flow;
+                flowTable.erase(flow);
+                break;
+            }
+            flow++;
+        }
 
         flowTable.push_back(msg); // Put the new flow in the table
         msg->setTimestamp(simTime()); // Start timeouts

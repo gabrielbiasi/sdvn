@@ -39,6 +39,7 @@ void SdvnController::initialize(int stage) {
         flowMods = map<int,vector<ControllerMessage*>>();
         flowThreshold = par("flowThreshold").doubleValue();
         numThreshold = par("numThreshold").doubleValue();
+        checkLast = par("checkLast").longValue();
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
@@ -132,9 +133,13 @@ ControllerMessage* SdvnController::newFlow(int sourceId, int destinationId, int 
 }
 
 void SdvnController::updateNetworkGraph(cMessage* message) {
-    NeighborMessage* m = (NeighborMessage*) message;
+    int vehicle, lastNumPacket, lastNumFlow;
+    double stdDevPacket, stdDevFlow;
+    NeighborMessage* m;
     vector<int> new_neighbors;
-    int vehicle = m->getSourceVehicle();
+
+    m = (NeighborMessage*) message;
+    vehicle = m->getSourceVehicle();
     if(graph.find(vehicle) != graph.end()) graph.erase(vehicle);
 
     new_neighbors = vector<int>();
@@ -149,35 +154,53 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
         // Register the amount of flow rules requested in this window
         // time and release the flow rules to the next window time.
 
+        // Add the new values
         numPackets[vehicle].push_back(m->getNumPackets());
         numFlows[vehicle].push_back(flowMods[vehicle].size());
 
-        // Phase 1: Detecting the attack
+        // If we do not have "checkLast" values to work, just ignore.
+        if(numPackets[vehicle].size() > checkLast && numFlows[vehicle].size() > checkLast) {
 
-        int lastNumPacket = numPackets[vehicle].back();
-        int lastNumFlow = numFlows[vehicle].back();
-
-        double stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
-        double stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
-
-        // Checking thresholds...
-        if((lastNumPacket > stdDevPacket*numThreshold) // Threshold for packet amount
-                && (lastNumFlow > stdDevFlow*flowThreshold) // Threshold for flow amount
-                && (vehicle < prefixRsuId) ) { // Check if is a RSU
-
-            // Phase 2: Mitigating the Attack
-
-            EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
-            EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
-            EV_INFO << "Building flow tree..." << endl;
-
-            recordScalar("Detectation Time", simTime());
+            // Removing the firsts
+            numPackets[vehicle].erase(numPackets[vehicle].begin());
+            numFlows[vehicle].erase(numFlows[vehicle].begin());
 
             /*
-             * TODO Create flow rule
-             * */
-        }
+             * Phase 1: Detecting the attack
+             */
 
+            lastNumPacket = numPackets[vehicle].back();
+            lastNumFlow = numFlows[vehicle].back();
+            stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
+            stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
+
+            // Checking thresholds...
+            if((lastNumPacket > stdDevPacket*numThreshold) // Threshold for packet amount
+                    && (lastNumFlow > stdDevFlow*flowThreshold) // Threshold for flow amount
+                    && (vehicle < prefixRsuId) ) { // Check if is a RSU
+
+                if(simTime() > 45.0) {
+                    recordScalar("lastNumPacket", lastNumPacket);
+                    recordScalar("lastNumFlow", lastNumFlow);
+                    recordScalar("stdDevPacket", stdDevPacket*numThreshold);
+                    recordScalar("stdDevFlow", stdDevFlow*flowThreshold);
+                }
+
+                /*
+                 * Phase 2: Mitigating the Attack
+                 */
+
+                EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
+                EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
+                EV_INFO << "Building flow tree..." << endl;
+
+                recordScalar("Detectation Time", simTime());
+
+                /*
+                 * TODO Create flow rule
+                 * */
+            }
+        }
         for(auto flow : flowMods[vehicle]) delete flow; // releasing memory
         flowMods[vehicle].clear();
     }
@@ -290,6 +313,10 @@ void SdvnController::finish() {
     timestamps.clear();
     numPackets.clear();
     numFlows.clear();
+}
+
+void SdvnController::buildFlowTree(int vehicle, map<int,vector<int>> &tree) {
+    return;
 }
 
 /*

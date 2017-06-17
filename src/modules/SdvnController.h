@@ -27,6 +27,7 @@ protected:
     map<int, vector<long>> numPackets;
     map<int, vector<long>> numFlows;
 
+    long checkLast;
     double flowThreshold;
     double numThreshold;
 
@@ -47,6 +48,7 @@ protected:
     int runSimpleDijkstra(int source, int destination);
 
     double getMeanPlusStdDev(const vector<long>&  li);
+    void buildFlowTree(int vehicle, map<int,vector<int>>& tree) ;
 
     void clearFarNeighbors();
 
