@@ -66,7 +66,7 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
      auto j = graph.begin();
      for(j = graph.begin(); j != graph.end(); j++) {
          dist[(*j).first] = INT_MAX;
-         prev[(*j).first] = -1;
+         prev[(*j).first] = NO_VEHICLE;
          listV.push_back((*j).first);
      }
 
@@ -87,7 +87,7 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
              }
          }
          if(shortV == -1) { // disconnected: (send to RSU or standby)
-             int target = -1;
+             int target = NO_VEHICLE;
              if(source != prefixRsuId) {
                  for(int i = 0; i < graph[source].size(); i++) { // Vehicle to RSU
                      int neighbor = graph[source][i];
@@ -97,7 +97,7 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
                      }
                  }
              }
-             if(target != -1) {
+             if(target != NO_VEHICLE) {
                  EV_INFO << "SDVN Controller: NOT FOUND, forward to RSU: [" << target << "]\n";
              } else {
                  EV_INFO << "SDVN Controller: STANDBY! \n";
@@ -125,7 +125,7 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
      }
 
      EV_INFO << "SDVN Controller: ALONE, just drop it.\n";
-     return -1;
+     return NO_VEHICLE;
 }
 
 ControllerMessage* SdvnController::newFlow(int sourceId, int destinationId, int flowAction, int flowDestination) {
@@ -175,9 +175,10 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
 }
 
 void SdvnController::executeSentinel(int vehicle, long packetValue, long flowValue) {
+    int ff;
     bool victimFlag;
     double stdDevPacket, stdDevFlow;
-    //ControllerMessage* cm, new_flow;
+    ControllerMessage* new_flow;
 
     auto victim = find(possibleVictims.begin(), possibleVictims.end(), vehicle);
     victimFlag = (victim != possibleVictims.end());
@@ -211,6 +212,8 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                     std::cout << "SDVN Controller: ATTACK!\n";
                     std::cout << "SDVN Controller: Attack confirmed on Vehicle [" << vehicle << "]\n";
 
+                    abnormalPackets[vehicle].clear();
+                    abnormalFlows[vehicle].clear();
                     possibleVictims.erase(victim);
 
                     buildFlowTree(vehicle);
@@ -221,9 +224,17 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                         }
                         std::cout << "]\n";
                     }
-                    /*
-                     * TODO send special flow rules
-                     */
+
+                    // Creating flows rules and sending
+                    // to bot destinations.
+                    vector<long> botflow = flowTree[flowTree.size()-1];
+                    for(auto bot : botflow) {
+                        ff = runSimpleDijkstra(bot, vehicle);
+                        new_flow = newFlow(bot, vehicle, S_DROP, ff);
+                        new_flow->setIdleTimeout(3.0);
+                        new_flow->setHardTimeout(5.0);
+                        sendController(new_flow);
+                    }
                 } else {
                     std::cout << "SDVN Controller: Vehicle [" << vehicle;
                     std::cout << "] still with abnormal behavior.\n";

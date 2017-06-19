@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for sdvn
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -I../../veins/src -L../../inet/out/$$\(CONFIGNAME\)/src -L../../veins/out/$$\(CONFIGNAME\)/src -lINET -lveins -KINET_PROJ=../../inet -KVEINS_PROJ=../../veins
+#  opp_makemake -f --deep -I../../veins/src -I../../veins/src/veins/modules/mobility/traci -L../../inet/out/$$\(CONFIGNAME\)/src -L../../veins/out/$$\(CONFIGNAME\)/src -lINET -lveins -KINET_PROJ=../../inet -KVEINS_PROJ=../../veins
 #
 
 # Name of target to be created (-o option)
@@ -17,6 +17,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 # C++ include paths (with -I)
 INCLUDE_PATH = \
     -I../../veins/src \
+    -I../../veins/src/veins/modules/mobility/traci \
     -I. \
     -Iapplication \
     -Imessages \
@@ -40,6 +41,7 @@ OBJS = \
     $O/application/SdvnPing.o \
     $O/modules/LteBase.o \
     $O/modules/SdvnController.o \
+    $O/modules/SdvnMobility.o \
     $O/modules/SdvnSwitch.o \
     $O/messages/AppMessage_m.o \
     $O/messages/ControllerMessage_m.o \
@@ -222,6 +224,34 @@ $O/modules/SdvnController.o: modules/SdvnController.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
 	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h
+$O/modules/SdvnMobility.o: modules/SdvnMobility.cc \
+	SdvnTypes.h \
+	application/SdvnPing.h \
+	modules/SdvnMobility.h \
+	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
+	$(VEINS_PROJ)/src/veins/base/connectionManager/NicEntry.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseBattery.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseMobility.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseModule.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseWorldUtility.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BatteryAccess.h \
+	$(VEINS_PROJ)/src/veins/base/utils/Coord.h \
+	$(VEINS_PROJ)/src/veins/base/utils/FWMath.h \
+	$(VEINS_PROJ)/src/veins/base/utils/FindModule.h \
+	$(VEINS_PROJ)/src/veins/base/utils/HostState.h \
+	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
+	$(VEINS_PROJ)/src/veins/base/utils/Move.h \
+	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIBuffer.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIColor.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICommandInterface.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIConnection.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICoord.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIMobility.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIScenarioManager.h \
+	$(VEINS_PROJ)/src/veins/modules/obstacle/Obstacle.h \
+	$(VEINS_PROJ)/src/veins/modules/obstacle/ObstacleControl.h \
+	$(VEINS_PROJ)/src/veins/modules/world/annotations/AnnotationManager.h
 $O/modules/SdvnSwitch.o: modules/SdvnSwitch.cc \
 	SdvnTypes.h \
 	application/SdvnPing.h \
