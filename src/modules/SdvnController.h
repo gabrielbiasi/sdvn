@@ -3,6 +3,7 @@
 
 #include <omnetpp.h>
 #include <cmath>
+#include <algorithm>
 
 #include "SdvnTypes.h"
 #include "messages/ControllerMessage_m.h"
@@ -24,11 +25,16 @@ protected:
 
     // Sentinel Variables
     bool sentinel;
+    vector<long> possibleVictims;
+    map<int, vector<ControllerMessage*>> flowMods;
+    map<int, vector<long>> abnormalPackets;
+    map<int, vector<long>> abnormalFlows;
     map<int, vector<long>> numPackets;
     map<int, vector<long>> numFlows;
     map<int, vector<long>> flowTree;
 
-    long checkLast;
+    long normalCheck;
+    long abnormalCheck;
     double flowThreshold;
     double numThreshold;
 
@@ -48,7 +54,7 @@ protected:
     ControllerMessage* newFlow(int sourceId, int destinationId, int flowAction, int flowDestination);
     int runSimpleDijkstra(int source, int destination);
 
-    void executeSentinel(int vehicle);
+    void executeSentinel(int vehicle, long packetValue, long flowValue);
     double getMeanPlusStdDev(const vector<long>&  li);
     void buildFlowTree(int victim);
 
@@ -57,7 +63,7 @@ protected:
 public:
     int findTarget(int id);
     bool findLocalNode(int id);
-    map<int, vector<ControllerMessage*>> flowMods;
+    map<int, long> eachNumFlow;
 };
 
 #endif

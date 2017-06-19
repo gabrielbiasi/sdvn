@@ -5,6 +5,7 @@ Define_Module(SdvnController);
 using std::map;
 using std::vector;
 using std::stringstream;
+using std::find;
 
 void SdvnController::initialize(int stage) {
     if (stage == 0) {
@@ -34,14 +35,20 @@ void SdvnController::initialize(int stage) {
         timestamps = map<int, simtime_t>();
 
         // Sentinel maps and parameters
+        flowTree = map<int,vector<long>>();
+        possibleVictims = vector<long>();
+        flowMods = map<int,vector<ControllerMessage*>>();
+        eachNumFlow = map<int,long>();
+
+        abnormalPackets = map<int,vector<long>>();
+        abnormalFlows = map<int,vector<long>>();
         numPackets = map<int,vector<long>>();
         numFlows = map<int,vector<long>>();
-        flowMods = map<int,vector<ControllerMessage*>>();
-        flowTree = map<int,vector<long>>();
 
         flowThreshold = par("flowThreshold").doubleValue();
         numThreshold = par("numThreshold").doubleValue();
-        checkLast = par("checkLast").longValue();
+        normalCheck = par("normalCheck").longValue();
+        abnormalCheck = par("abnormalCheck").longValue();
 
         prefixRsuId = 10000;
         architecture = getSystemModule()->par("architecture").longValue();
@@ -163,85 +170,102 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
     timestamps[vehicle] = nm->getTimestamp();
 
     if(sentinel) {
-        numPackets[vehicle].push_back(nm->getNumPackets());
-        numFlows[vehicle].push_back(flowMods[vehicle].size());
-        executeSentinel(vehicle);
+        executeSentinel(vehicle, nm->getNumPackets(), eachNumFlow[vehicle]);
     }
 }
 
-void SdvnController::executeSentinel(int vehicle) {
-    int lastNumPacket, lastNumFlow;
+void SdvnController::executeSentinel(int vehicle, long packetValue, long flowValue) {
+    bool victimFlag;
     double stdDevPacket, stdDevFlow;
-    ControllerMessage* cm, new_flow;
+    //ControllerMessage* cm, new_flow;
 
-    // Register the amount of flow rules requested in this window
-    // time and release the flow rules to the next window time.
-    // If we do not have "checkLast" values to work, just ignore.
-    if(numPackets[vehicle].size() > checkLast && numFlows[vehicle].size() > checkLast) {
+    auto victim = find(possibleVictims.begin(), possibleVictims.end(), vehicle);
+    victimFlag = (victim != possibleVictims.end());
 
-        // Removing the firsts
-        numPackets[vehicle].erase(numPackets[vehicle].begin());
-        numFlows[vehicle].erase(numFlows[vehicle].begin());
+    // If we do not have "normalCheck" values to work, just add the values and ignore.
+    if(numPackets[vehicle].size() > normalCheck && numFlows[vehicle].size() > normalCheck) {
 
         /*
          * Phase 1: Detecting the attack
          */
-
-        lastNumPacket = numPackets[vehicle].back();
-        lastNumFlow = numFlows[vehicle].back();
         stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
         stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
 
         // Checking thresholds...
-        if((lastNumPacket > stdDevPacket*numThreshold) // Threshold for packet amount
-                && (lastNumFlow > stdDevFlow*flowThreshold) // Threshold for flow amount
-                && (vehicle < prefixRsuId) ) { // Check if is a RSU
+        if((packetValue > stdDevPacket*numThreshold) // Threshold for packet amount
+                && (flowValue > stdDevFlow*flowThreshold) // Threshold for flow amount
+                && (vehicle < prefixRsuId)) { // Check if is a RSU
 
-            if(simTime() > 45.0) {
-                recordScalar("lastNumPacket", lastNumPacket);
-                recordScalar("lastNumFlow", lastNumFlow);
-                recordScalar("stdDevPacket", stdDevPacket*numThreshold);
-                recordScalar("stdDevFlow", stdDevFlow*flowThreshold);
-            }
+            // The values now will be stored on "abnormal" vectors.
+            abnormalPackets[vehicle].push_back(packetValue);
+            abnormalFlows[vehicle].push_back(flowValue);
 
-            /*
-             * Phase 2: Mitigating the Attack
-             */
+            // Checking if vehicle is a possible victim or not
+            if(victimFlag) {
+                if(abnormalPackets[vehicle].size() >= abnormalCheck
+                        && abnormalFlows[vehicle].size() >= abnormalCheck) {
 
-            EV_INFO << "SDVN Controller: ATTACK ATTACK ATTACK" << endl;
-            EV_INFO << "SDVN Controller: Vehicle [" << vehicle << "] is over attack!" << endl;
-            EV_INFO << "Building flow tree..." << endl;
+                    /*
+                     * Phase 2: Mitigating the Attack
+                     */
+                    std::cout << "SDVN Controller: ATTACK!\n";
+                    std::cout << "SDVN Controller: Attack confirmed on Vehicle [" << vehicle << "]\n";
 
-            recordScalar("Detectation Time", simTime());
+                    possibleVictims.erase(victim);
 
-            for(auto aa : flowMods[vehicle]) {
-                std::cout << "[" << aa->getSourceVehicle() << "->" << aa->getDestinationAddress();
-                std::cout << "] via [" << aa->getFlowId() << "], type [" << aa->getFlowAction();
-                std::cout << "] created: [" << aa->getTimestamp() << "]\n";
-            }
-
-            buildFlowTree(vehicle);
-
-            for(auto aa : flowTree) {
-                std::cout << "[";
-                for(auto bb : aa.second) {
-                    std::cout << bb << ", ";
+                    buildFlowTree(vehicle);
+                    for(auto aa : flowTree) {
+                        std::cout << "[";
+                        for(auto bb : aa.second) {
+                            std::cout << bb << ", ";
+                        }
+                        std::cout << "]\n";
+                    }
+                    /*
+                     * TODO send special flow rules
+                     */
+                } else {
+                    std::cout << "SDVN Controller: Vehicle [" << vehicle;
+                    std::cout << "] still with abnormal behavior.\n";
                 }
-                std::cout << "]\n";
+            } else {
+                std::cout << "SDVN Controller: New possible attack detected on vehicle [";
+                std::cout << vehicle << "], starting monitoring.\n";
+                possibleVictims.push_back(vehicle);
             }
 
-            /*
-             * TODO Create flow rule
-             *
-            for(;;) {
-                new_flow = newFlow(vehicle, vehicle, S_DROP, NO_VEHICLE);
-                sendController(new_flow);
-            }*/
+            // The return is called here in order to bypass the code
+            // where the flow rules are released and keep all flow rules
+            // until the possible attack be resolved.
+            eachNumFlow[vehicle] = 0;
+            return;
+        } else {
+            // Checking if vehicle is in possible victim vector in order to remove
+            if(victimFlag) {
+                std::cout << "SDVN Controller: Vehicle [";
+                std::cout << vehicle << "] removed from possible victims.\n";
+                abnormalPackets[vehicle].clear();
+                abnormalFlows[vehicle].clear();
+                possibleVictims.erase(victim);
+            }
+
+            // Removing the first values
+            numPackets[vehicle].erase(numPackets[vehicle].begin());
+            numFlows[vehicle].erase(numFlows[vehicle].begin());
+
+            // Adding the new values
+            numPackets[vehicle].push_back(packetValue);
+            numFlows[vehicle].push_back(flowValue);
         }
+    } else {
+        // The vehicle does not have enough values yet, just adding.
+        numPackets[vehicle].push_back(packetValue);
+        numFlows[vehicle].push_back(flowValue);
     }
     // releasing memory
     for(auto flow : flowMods[vehicle]) delete flow;
     flowMods[vehicle].clear();
+    eachNumFlow[vehicle] = 0;
 }
 
 
@@ -310,6 +334,7 @@ void SdvnController::handleMessage(cMessage *msg) {
                     it++;
                 }
                 flowMods[destinationId].push_back(flow->dup());
+                eachNumFlow[destinationId]++;
             }
 
             sendController(flow);
@@ -324,12 +349,8 @@ void SdvnController::handleMessage(cMessage *msg) {
 }
 
 double SdvnController::getMeanPlusStdDev(const vector<long>&  li) {
-    // Std Dev code ignoring the last value
-    unsigned int i, size;
-    double sum, mean, stddev;
-    size = li.size() - 1; // last value ignored
-    sum = 0;
-    stddev = 0;
+    unsigned int i, size = li.size();
+    double sum = 0, mean = 0, stddev = 0;
     for(i = 0; i < size; i++) sum += li[i];
     mean = sum/size;
     for(i = 0; i < size; i++) stddev += pow(i-mean, 2);
@@ -361,15 +382,20 @@ void SdvnController::buildFlowTree(int victim) {
     int i, counter, vehicle;
     vector<long> stack = vector<long>();
 
+    i = 0;
+    counter = 0;
     flowTree.clear();
-    flowTree[0].push_back(victim);
+    flowTree[i].push_back(victim);
     stack.push_back(victim);
-    i = 1;
-    counter = 1;
 
     while(!stack.empty()) {
         vehicle = stack.front();
         stack.erase(stack.begin());
+
+        if(counter == 0) {
+            counter = flowTree[i].size();
+            i++;
+        }
 
         for(auto flow : flowMods[victim]) {
             if(flow->getFlowId() == vehicle
@@ -380,10 +406,6 @@ void SdvnController::buildFlowTree(int victim) {
             }
         }
         counter--;
-        if(counter == 0) {
-            counter = flowTree[i].size();
-            i++;
-        }
     }
 }
 

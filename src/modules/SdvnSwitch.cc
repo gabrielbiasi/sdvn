@@ -284,7 +284,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
 
         int fuu;
         SdvnController* c = dynamic_cast<SdvnController*>(getSystemModule()->getModuleByPath(".controller"));
-        fuu = c->flowMods[myId].size();
+        fuu = c->eachNumFlow[myId];
         numFlowsV.record(fuu);
         numPackets = 0; // Reseting
 
@@ -425,16 +425,12 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
     int gateId = msg->getArrivalGateId();
 
     if(architecture == DISTRIBUTED && name == "control") {
-        //EV_INFO << "lala\n";
         WaveShortMessage* wsm = (WaveShortMessage*) msg;
         if(!isVehicle() && gateId != fromController && wsm->getRecipientAddress() == myId) { // RSU just passing message to controller
             send(msg, toController);
-            //EV_INFO << "lele\n";
         } else if(gateId == fromController && wsm->getRecipientAddress() != myId) { // Controller wants to send a control message
             sendWSM(wsm);
-            //EV_INFO << "lili\n";
         } else {
-            //EV_INFO << "lolo\n";
             if(ControllerMessage* cm = dynamic_cast<ControllerMessage*>(msg)) {
                 onController(cm);
             } else {
@@ -444,19 +440,14 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
         }
     }
     else if (gateId == fromApp) {
-        //EV_INFO << "lulu\n";
         onApplication((AppMessage*) msg);
     } else if(name == "control") {
-        //EV_INFO << "haha\n";
         onController((ControllerMessage*) msg);
     } else if (name == "data" || gateId == fromRsu) {
-        //EV_INFO << "hehe\n";
         onData((WaveShortMessage*) msg);
     } else if (name == "beacon") {
-        //EV_INFO << "hihi\n";
         onBeacon((WaveShortMessage*) msg);
     } else {
-        //EV_INFO << "hoho\n";
         BaseLayer::handleMessage(msg);
     }
 }
