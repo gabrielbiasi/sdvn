@@ -25,7 +25,8 @@ protected:
 
     // Sentinel Variables
     bool sentinel;
-    vector<long> possibleVictims;
+    map<int, long> victims;
+    vector<long> suspicious;
     map<int, vector<ControllerMessage*>> flowMods;
     map<int, vector<long>> abnormalPackets;
     map<int, vector<long>> abnormalFlows;
