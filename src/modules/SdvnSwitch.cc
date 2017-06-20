@@ -98,10 +98,12 @@ void SdvnSwitch::cleanFlowTable() {
     while(it < flowTable.end()) {
         ControllerMessage* cm = (ControllerMessage*) (*it);
         if (now > cm->getTimestamp() + cm->getHardTimeout()) {
+            if(cm->getFlowAction() == S_DROP) std::cout << "vehicle [" << myId << "] dropping by hard\n";
             c1++;
             flowTable.erase(it);
             delete cm;
         } else if (now > cm->getLastUsed() + cm->getIdleTimeout()) {
+            if(cm->getFlowAction() == S_DROP) std::cout << "vehicle [" << myId << "] dropping by idle\n";
             c2++;
             flowTable.erase(it);
             delete cm;
