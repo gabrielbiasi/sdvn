@@ -28,8 +28,8 @@ protected:
     map<int, long> victims;
     vector<long> suspicious;
     map<int, vector<ControllerMessage*>> flowMods;
-    map<int, vector<long>> abnormalPackets;
-    map<int, vector<long>> abnormalFlows;
+    map<long,long> abnormalPackets;
+    map<long,long> abnormalFlows;
     map<int, vector<long>> numPackets;
     map<int, vector<long>> numFlows;
     map<int, vector<long>> flowTree;

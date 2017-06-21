@@ -37,12 +37,12 @@ void SdvnController::initialize(int stage) {
         // Sentinel maps and parameters
         victims = map<int,long>();
         suspicious = vector<long>();
-        flowTree = map<int,vector<long>>();
+        flowTree = map<int, vector<long>>();
         flowMods = map<int,vector<ControllerMessage*>>();
         eachNumFlow = map<int,long>();
 
-        abnormalPackets = map<int,vector<long>>();
-        abnormalFlows = map<int,vector<long>>();
+        abnormalPackets = map<long,long>();
+        abnormalFlows = map<long,long>();
         numPackets = map<int,vector<long>>();
         numFlows = map<int,vector<long>>();
 
@@ -176,7 +176,6 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
 }
 
 void SdvnController::executeSentinel(int vehicle, long packetValue, long flowValue) {
-    int ff;
     bool is_suspect, is_victim;
     double stdDevPacket, stdDevFlow;
     ControllerMessage* new_flow;
@@ -211,18 +210,17 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
             std::cout << "packet delta: " << stdDevPacket*numThreshold << " flow delta: " << stdDevFlow*flowThreshold << "\n";
         }
 
-        // Checking thresholds...
+        // Checking thresholds in order to classify an abnormal value
         if((packetValue > stdDevPacket*numThreshold) // Threshold for packet amount
                 && (flowValue > stdDevFlow*flowThreshold) // Threshold for flow amount
                 && (vehicle < prefixRsuId)) { // Check if is a RSU
 
-            // The values now will be stored on "abnormal" vectors.
-            abnormalPackets[vehicle].push_back(packetValue);
-            abnormalFlows[vehicle].push_back(flowValue);
+            // The abnormal values were detected, starting counting.
+            abnormalPackets[vehicle]++;
+            abnormalFlows[vehicle]++;
 
-            // Check if vehicle is a suspect or already a victim
-            if(abnormalPackets[vehicle].size() >= abnormalCheck
-                            && abnormalFlows[vehicle].size() >= abnormalCheck) {
+            // Check if vehicle is receiving enough abnormal values to consider an attack
+            if(abnormalPackets[vehicle] >= abnormalCheck && abnormalFlows[vehicle] >= abnormalCheck) {
                 /*
                  * Phase 2: Mitigating the Attack
                  */
@@ -235,34 +233,48 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                     std::cout << "] still over attack.\n";
                 }
 
-                // Restarting the counter.
+                // Restarting the counter of victim or "adding" the
+                // suspect vehicle to the victim vector.
                 victims[vehicle] = 0;
 
-                buildFlowTree(vehicle);
-                for(auto aa : flowTree) {
-                    std::cout << "[";
-                    for(auto bb : aa.second) std::cout << bb << ", ";
+                // Getting the the leafs of flow tree
+                for(auto ww : flowMods[vehicle]) {
+                    std::cout << "[" << ww->getSourceVehicle();
+                    std::cout << "->" << ww->getDestinationAddress();
+                    std::cout << "] via [" << ww->getFlowId();
+                    std::cout << "] load: [" << numPackets[ww->getSourceVehicle()].back();
+                    std::cout << "] created: [" << ww->getTimestamp();
                     std::cout << "]\n";
                 }
+                buildFlowTree(vehicle);
 
                 // Creating flows rules and sending
                 // to bot destinations.
-                for(auto node : flowTree) {
-                    for(auto bot : node.second) {
-                        ff = runSimpleDijkstra(bot, vehicle);
-                        new_flow = newFlow(bot, vehicle, S_DROP, ff);
-                        sendController(new_flow);
+                std::cout << "[";
+                for(auto level : flowTree) {
+                    for(auto bot : level.second) {
+                        stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
+                        if(numPackets[bot].back() >= stdDevPacket) {
+                            std::cout << bot << "!, ";
+                            new_flow = newFlow(bot, vehicle, DROP, NO_VEHICLE);
+                            sendController(new_flow);
+                        } else {
+                            std::cout << bot << ", ";
+                        }
                     }
                 }
+                std::cout << "]\n";
 
             } else {
+                // Abnormal values detected but the vehicle do not
+                // receive enough values to consider an attack.
                 if(!is_suspect) {
                     std::cout << "SDVN Controller: New possible attack detected on vehicle [";
                     std::cout << vehicle << "], starting monitoring.\n";
                     suspicious.push_back(vehicle);
                 } else {
                     std::cout << "SDVN Controller: Suspected vehicle [";
-                    std::cout << vehicle << "], still with abnormal behavior.\n";
+                    std::cout << vehicle << "], still with abnormal values.\n";
                 }
             }
 
@@ -276,13 +288,13 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
             if(is_suspect && !is_victim) {
                 std::cout << "SDVN Controller: Vehicle [";
                 std::cout << vehicle << "] removed from possible victims.\n";
-                abnormalPackets[vehicle].clear();
-                abnormalFlows[vehicle].clear();
+                abnormalPackets[vehicle] = 0;
+                abnormalFlows[vehicle] = 0;
                 suspicious.erase(suspect);
             } else if(is_victim) {
                 if(victims[vehicle] > 2*abnormalCheck) {
                     std::cout << "SDVN Controller: Vehicle [";
-                    std::cout << vehicle << "] victim with 2*3 values, attack has stopped.\n";
+                    std::cout << vehicle << "] with enough normal values, attack has stopped.\n";
                     auto tt = victims.find(vehicle);
                     victims.erase(tt);
                     is_victim = false;

@@ -41,7 +41,7 @@ class SdvnSwitch : public BaseWaveApplLayer {
     public:
         virtual void initialize(int stage);
         virtual void receiveSignal(cComponent* source, simsignal_t signalID, cObject* obj, cObject* details);
-
+        int botFlowId;
     protected:
         TraCIMobility* mobility;
         TraCICommandInterface* traci;
@@ -73,7 +73,6 @@ class SdvnSwitch : public BaseWaveApplLayer {
         long numPackets;
 
         // The bot will select a neighbor to forward the attack
-        int botFlowId;
 
         // App Gates
         int fromApp;

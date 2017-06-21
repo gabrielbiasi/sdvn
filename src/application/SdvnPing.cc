@@ -58,7 +58,7 @@ void SdvnPing::initialize(int stage) {
             } else if (simTime() > startTime && simTime() < startTime + duration) { // Vehicle shows up during the attack
                 scheduleAt(simTime()+0.0001, attackEvent);
             } else { // Vehicle shows up after the attack
-                delete attackEvent;
+               // does nothing
             }
         } else {
             attackEvent = nullptr;
