@@ -54,7 +54,6 @@ void SdvnController::initialize(int stage) {
 int SdvnController::runSimpleDijkstra(int source, int destination) {
 
      // Start all distances with infinite
-
      vector<int> listV = vector<int>();
      map<int,int> dist = map<int,int>();
      map<int,int> prev = map<int,int>();
@@ -191,21 +190,6 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
         stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
         stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
 
-        if(vehicle == 64 && simTime() >= 70.0 && simTime() <= 90.0) {
-            std::cout << "numPackets [";
-            for(auto ww : numPackets[vehicle]) {
-                std::cout << ww << ", ";
-            }
-            std::cout << "]\n";
-            std::cout << "numFlows [";
-            for(auto ww : numFlows[vehicle]) {
-                std::cout << ww << ", ";
-            }
-            std::cout << "]\n";
-            std::cout << "packet now: " << packetValue << " flow now: " << flowValue << "\n";
-            std::cout << "packet delta: " << stdDevPacket*numThreshold << " flow delta: " << stdDevFlow*flowThreshold << "\n";
-        }
-
         // Checking thresholds in order to classify an abnormal value
         if((packetValue > stdDevPacket*numThreshold) // Threshold for packet amount
                 && (flowValue > stdDevFlow*flowThreshold) // Threshold for flow amount
@@ -221,12 +205,12 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                  * Phase 2: Mitigating the Attack
                  */
                 if(is_suspect) {
-                    std::cout << "SDVN Controller: ATTACK!\n";
-                    std::cout << "SDVN Controller: Attack confirmed on Vehicle [" << vehicle << "]\n";
+                    EV_INFO << "SDVN Controller: ATTACK!\n";
+                    EV_INFO << "SDVN Controller: Attack confirmed on Vehicle [" << vehicle << "]\n";
                     suspicious.erase(suspect);
                 } else {
-                    std::cout << "SDVN Controller: Vehicle [" << vehicle;
-                    std::cout << "] still over attack.\n";
+                    EV_INFO << "SDVN Controller: Vehicle [" << vehicle;
+                    EV_INFO << "] still over attack.\n";
                 }
 
                 // Restarting the counter of victim or "adding" the
@@ -234,43 +218,30 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                 victims[vehicle] = 0;
 
                 // Getting the the leafs of flow tree
-                for(auto ww : flowMods[vehicle]) {
-                    std::cout << "[" << ww->getSourceVehicle();
-                    std::cout << "->" << ww->getDestinationAddress();
-                    std::cout << "] via [" << ww->getFlowId();
-                    std::cout << "] load: [" << numPackets[ww->getSourceVehicle()].back();
-                    std::cout << "] created: [" << ww->getTimestamp();
-                    std::cout << "]\n";
-                }
                 buildFlowTree(vehicle);
 
                 // Creating flows rules and sending
                 // to bot destinations.
-                std::cout << "[";
                 for(auto level : flowTree) {
                     for(auto bot : level.second) {
                         stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
                         if(numPackets[bot].back() >= stdDevPacket) {
-                            std::cout << bot << "!, ";
                             new_flow = newFlow(bot, vehicle, DROP, NO_VEHICLE);
                             sendController(new_flow);
-                        } else {
-                            std::cout << bot << ", ";
                         }
                     }
                 }
-                std::cout << "]\n";
 
             } else {
                 // Abnormal values detected but the vehicle do not
                 // receive enough values to consider an attack.
                 if(!is_suspect) {
-                    std::cout << "SDVN Controller: New possible attack detected on vehicle [";
-                    std::cout << vehicle << "], starting monitoring.\n";
+                    EV_INFO << "SDVN Controller: New possible attack detected on vehicle [";
+                    EV_INFO << vehicle << "], starting monitoring.\n";
                     suspicious.push_back(vehicle);
                 } else {
-                    std::cout << "SDVN Controller: Suspected vehicle [";
-                    std::cout << vehicle << "], still with abnormal values.\n";
+                    EV_INFO << "SDVN Controller: Suspected vehicle [";
+                    EV_INFO << vehicle << "], still with abnormal values.\n";
                 }
             }
 
@@ -282,21 +253,21 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
         } else {
             // Checking if vehicle is in possible victim vector in order to remove
             if(is_suspect && !is_victim) {
-                std::cout << "SDVN Controller: Vehicle [";
-                std::cout << vehicle << "] removed from possible victims.\n";
+                EV_INFO << "SDVN Controller: Vehicle [";
+                EV_INFO << vehicle << "] removed from possible victims.\n";
                 abnormalPackets[vehicle] = 0;
                 abnormalFlows[vehicle] = 0;
                 suspicious.erase(suspect);
             } else if(is_victim) {
                 if(victims[vehicle] > 2*abnormalCheck) {
-                    std::cout << "SDVN Controller: Vehicle [";
-                    std::cout << vehicle << "] with enough normal values, attack has stopped.\n";
+                    EV_INFO << "SDVN Controller: Vehicle [";
+                    EV_INFO << vehicle << "] with enough normal values, attack has stopped.\n";
                     auto tt = victims.find(vehicle);
                     victims.erase(tt);
                     is_victim = false;
                 } else {
-                    std::cout << "SDVN Controller: Vehicle [";
-                    std::cout << vehicle << "] victim with normal values but still a victim.\n";
+                    EV_INFO << "SDVN Controller: Vehicle [";
+                    EV_INFO << vehicle << "] victim with normal values but still a victim.\n";
                     victims[vehicle]++;
 
                     // The return is called here in order to bypass the code
@@ -411,10 +382,10 @@ void SdvnController::handleMessage(cMessage *msg) {
 double SdvnController::getMeanPlusStdDev(const vector<long>&  li) {
     unsigned int i, size = li.size();
     double sum = 0, mean = 0, stddev = 0;
-    for(i = 0; i < size; i++) sum += li[i];
-    mean = sum/size;
+    for(i = 0; i < size; i++) sum += li[i]; // sum all values
+    mean = sum/size; // arithmetic mean
     for(i = 0; i < size; i++) stddev += pow(i-mean, 2);
-    return (mean + sqrt(stddev/size));
+    return (mean + sqrt(stddev/size)); // mean + standard derivation
 }
 
 void SdvnController::sendController(cMessage* msg) {
@@ -448,6 +419,7 @@ void SdvnController::buildFlowTree(int victim) {
     flowTree[i].push_back(victim);
     stack.push_back(victim);
 
+    // Checking the stack
     while(!stack.empty()) {
         vehicle = stack.front();
         stack.erase(stack.begin());

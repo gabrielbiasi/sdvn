@@ -29,10 +29,11 @@
 #include "modules/SdvnController.h"
 
 using Veins::TraCIMobility;
+using Veins::TraCIMobilityAccess;
 using Veins::TraCICommandInterface;
-using Veins::AnnotationManager;
 
 using std::vector;
+using std::string;
 
 /**
  * Software Defined Vehicular Network Switch
@@ -46,25 +47,24 @@ class SdvnSwitch : public BaseWaveApplLayer {
         TraCIMobility* mobility;
         TraCICommandInterface* traci;
         TraCICommandInterface::Vehicle* traciVehicle;
-        AnnotationManager* annotations;
 
-        std::string type;
+        string type;
         int prefixRsuId;
 
-        std::vector<AppMessage*> packetInBuffer;
+        vector<AppMessage*> packetInBuffer;
         int maxPacketInBuffer;
 
-        std::vector<WaveShortMessage*> rsuQueue;
+        vector<WaveShortMessage*> rsuQueue;
 
-        std::vector<AppMessage*> packetStandbyBuffer;
+        vector<AppMessage*> packetStandbyBuffer;
         int maxPacketStandbyBuffer;
         double standbyTime;
 
         double controllerBeaconsInterval;
         cMessage* controllerBeaconEvent;
-        std::vector<int> currentNeighbors;
+        vector<int> currentNeighbors;
 
-        std::vector<ControllerMessage*> flowTable;
+        vector<ControllerMessage*> flowTable;
         int maxFlowRules;
 
         // Information to controller about the traffic

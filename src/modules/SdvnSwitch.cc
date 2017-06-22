@@ -1,31 +1,10 @@
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/.
-//
 #include "modules/SdvnSwitch.h"
-
-using Veins::TraCIMobilityAccess;
-using Veins::AnnotationManagerAccess;
-using Veins::TraCIScenarioManagerAccess;
 
 Define_Module(SdvnSwitch);
 
 void SdvnSwitch::initialize(int stage) {
     BaseWaveApplLayer::initialize(stage);
     if (stage == 0) {
-        annotations = AnnotationManagerAccess().getIfExists();
-        ASSERT(annotations);
-
         architecture = getSystemModule()->par("architecture").longValue();
         prefixRsuId = par("prefixRsuId").longValue();
 
@@ -34,10 +13,7 @@ void SdvnSwitch::initialize(int stage) {
             mobility = TraCIMobilityAccess().get(getParentModule());
             traci = mobility->getCommandInterface();
             traciVehicle = mobility->getVehicleCommandInterface();
-
-            std::stringstream ss;
-            ss << ".vehicle[" << myId << "].appl";
-            appl = (SdvnPing*) getSystemModule()->getModuleByPath(ss.str().c_str());
+            appl = (SdvnPing*) getParentModule()->getSubmodule("appl");
         } else {
             appl = nullptr;
             BaseMobility* mobi = (BaseMobility*) getParentModule()->getSubmodule("mobility");
@@ -70,16 +46,17 @@ void SdvnSwitch::initialize(int stage) {
         controllerBeaconEvent = new cMessage("Send Neighbors", 010);
         controllerBeaconsInterval = par("controllerBeaconsInterval").doubleValue();
 
+        // WTF
         double offSet = dblrand() * (controllerBeaconsInterval / 2);
         offSet = offSet + floor(offSet/0.050)*0.050;
         scheduleAt(simTime() + offSet, controllerBeaconEvent);
 
-        currentNeighbors = std::vector<int>();
-        flowTable = std::vector<ControllerMessage*>();
-        packetInBuffer = std::vector<AppMessage*>();
-        packetStandbyBuffer = std::vector<AppMessage*>();
+        currentNeighbors = vector<int>();
+        flowTable = vector<ControllerMessage*>();
+        packetInBuffer = vector<AppMessage*>();
+        packetStandbyBuffer = vector<AppMessage*>();
 
-        rsuQueue = std::vector<WaveShortMessage*>();
+        rsuQueue = vector<WaveShortMessage*>();
 
         droppedRule = 0;
         droppedByTTL = 0;
@@ -383,7 +360,7 @@ void SdvnSwitch::onApplication(AppMessage* msg) {
     // AppMessage to WaveShortMessage
     WaveShortMessage* wsm = (WaveShortMessage*) msg;
 
-    size_t message_size = std::string(msg->getPayload()).length();
+    size_t message_size = string(msg->getPayload()).length();
     wsm->addByteLength(message_size);
 
     wsm->setName("data");
@@ -430,7 +407,7 @@ void SdvnSwitch::onBeacon(WaveShortMessage* wsm) {
 }
 
 void SdvnSwitch::handleMessage(cMessage* msg) {
-    std::string name = std::string(msg->getName());
+    string name = string(msg->getName());
     int gateId = msg->getArrivalGateId();
 
     if(architecture == DISTRIBUTED && name == "control") {
@@ -462,7 +439,7 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
 }
 
 bool SdvnSwitch::isVehicle() {
-    return (type == std::string("Vehicle"));
+    return (type == string("Vehicle"));
 }
 
 bool SdvnSwitch::hasActiveVehicle() {
@@ -517,6 +494,7 @@ void SdvnSwitch::sendController(cMessage* msg)  {
 }
 
 void SdvnSwitch::sendRSU(WaveShortMessage* msg) {
+    // TODO Change this
     std::stringstream ss;
     ss << ".rsu[" << (msg->getRecipientAddress()-prefixRsuId) << "].switcher";
     cModule* rsu = getSystemModule()->getModuleByPath(ss.str().c_str());

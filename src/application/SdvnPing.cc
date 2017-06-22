@@ -87,7 +87,7 @@ void SdvnPing::initialize(int stage) {
 void SdvnPing::handleMessage(cMessage *msg) {
     if(msg->isSelfMessage()) {
         AppMessage* packet;
-        std::stringstream ss;
+        stringstream ss;
         int destinationId, repeat;
 
         switch(msg->getKind()) {
@@ -111,7 +111,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
                 packet->setId(msgSent);
 
                 // Payload
-                ss.str("");
+                ss.clear();
                 ss << "PING Hello!";
                 packet->setPayload(ss.str().c_str());
 
@@ -128,7 +128,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
         case 1: // Start or Stop Attack!
             if(!attacking) { // Starting attacks
                 attacking = true;
-                std::cout << "Vehicle [" << vehicleId << "] starting attack on ["<< victims[k] << "]\n";
+                EV_INFO << "Vehicle [" << vehicleId << "] starting attack on ["<< victims[k] << "]\n";
                 if(!first) first = true;
 
                 // Stop the message event for black hole and overflow attack
@@ -137,7 +137,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
 
             } else { // Stopping attacks
                 attacking = false;
-                std::cout << "Vehicle [" << vehicleId << "] stopping attack on ["<< victims[k] << "]\n";
+                EV_INFO << "Vehicle [" << vehicleId << "] stopping attack.\n";
                 if(first) {
                     k++;
                     first = false;
@@ -161,9 +161,9 @@ void SdvnPing::handleMessage(cMessage *msg) {
         AppMessage* packet = (AppMessage*) msg;
         int packetId = packet->getId();
         int senderId = packet->getSourceAddress();
-        std::string s = std::string(packet->getPayload());
+        string s = string(packet->getPayload());
 
-        if(s.find("PING") != std::string::npos) {
+        if(s.find("PING") != string::npos) {
             // PING received from a vehicle. Sending PONG.
             EV_INFO << "Vehicle [" << vehicleId << "] PING #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
             EV_INFO << "Vehicle [" << vehicleId << "] Sending PONG...\n";
@@ -177,7 +177,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
 
             send(packet, toSwitch);
 
-        } else if(s.find("PONG") != std::string::npos) {
+        } else if(s.find("PONG") != string::npos) {
             // PONG received from a vehicle. Registering statistics.
             simtime_t latency = simTime()-packet->getTimestamp();
             vLatency.record(latency);
@@ -199,7 +199,7 @@ void SdvnPing::schedule() {
 cModule* SdvnPing::getRandomVehicle() {
     auto map = TraCIScenarioManagerAccess().get()->getManagedHosts();
     auto iter = map.begin();
-    std::advance(iter, intuniform(0, map.size()-1));
+    advance(iter, intuniform(0, map.size()-1));
     return iter->second;
 }
 
@@ -218,7 +218,6 @@ void SdvnPing::finish() {
     }
 
     if(attacker) {
-        recordScalar("attacker", true);
         if(attackEvent->isScheduled()) {
             cancelAndDelete(attackEvent);
         } else {

@@ -24,10 +24,13 @@
 #include "messages/AppMessage_m.h"
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 
-using std::vector;
-
 using namespace omnetpp;
 using Veins::TraCIScenarioManagerAccess;
+
+using std::string;
+using std::vector;
+using std::advance;
+using std::stringstream;
 
 class SdvnPing : public cSimpleModule
 {
