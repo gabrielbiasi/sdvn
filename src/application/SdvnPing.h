@@ -19,10 +19,13 @@
 #include <omnetpp.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "SdvnTypes.h"
+#include "messages/AppMessage_m.h"
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 
-using namespace std;
+using std::vector;
+
 using namespace omnetpp;
 using Veins::TraCIScenarioManagerAccess;
 
@@ -34,7 +37,8 @@ class SdvnPing : public cSimpleModule
     int fromSwitch;
 
     long vehicleId;
-    double packetInterval;
+    double burstSize;
+    double burstInterval;
     double warmUp;
 
     int msgSent;
@@ -58,7 +62,6 @@ class SdvnPing : public cSimpleModule
 
     // Attacks Settings
     bool attacker;
-    static int victimId; // All attackers will know the victimId
     bool attacking;
     int attackMode;
     double attackerRate;
@@ -67,7 +70,11 @@ class SdvnPing : public cSimpleModule
     vector<long> attackSize;
     vector<long> startTime;
     vector<long> duration;
-    int k, size;
+    vector<long> victims;
+
+    static int k;
+    static bool first;
+    int size;
 };
 
 #endif

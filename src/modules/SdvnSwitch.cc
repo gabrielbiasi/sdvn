@@ -94,7 +94,7 @@ void SdvnSwitch::initialize(int stage) {
 void SdvnSwitch::cleanFlowTable() {
     simtime_t now = simTime();
     int c1 = 0, c2 = 0, c3 = 0;
-    vector<ControllerMessage*>::iterator it = flowTable.begin();
+    auto it = flowTable.begin();
     while(it < flowTable.end()) {
         ControllerMessage* cm = (ControllerMessage*) (*it);
         if (now > cm->getTimestamp() + cm->getHardTimeout()) {
@@ -355,8 +355,8 @@ void SdvnSwitch::onController(ControllerMessage* msg) {
         msg->setLastUsed(simTime());
 
         vector<AppMessage*> selected = vector<AppMessage*>();
-        vector<AppMessage*>::iterator it = packetInBuffer.begin();
 
+        auto it = packetInBuffer.begin();
         while(it < packetInBuffer.end()){
             AppMessage* ap = (AppMessage*) (*it);
             if(ap->getDestinationAddress() == msg->getDestinationAddress()) {

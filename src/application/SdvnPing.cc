@@ -1,39 +1,19 @@
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-// 
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
-
-#include "SdvnPing.h"
-#include "messages/AppMessage_m.h"
-
-using namespace std;
-using Veins::TraCIScenarioManagerAccess;
+#include "application/SdvnPing.h"
 
 Define_Module(SdvnPing);
 
-int SdvnPing::victimId = NO_VEHICLE;
+int SdvnPing::k = 0;
+bool SdvnPing::first = false;
 
 void SdvnPing::initialize(int stage) {
     char *token, buffer[100];
     if (stage == 0) {
-        attackMode = par("attackMode").longValue();
-        attackerRate = par("attackerRate").doubleValue();
-
         toSwitch = findGate("toSwitch");
         fromSwitch = findGate("fromSwitch");
 
         vehicleId = getParentModule()->getIndex();
-        packetInterval = par("packetInterval").doubleValue();
+        burstSize = par("burstSize").doubleValue();
+        burstInterval = par("burstInterval").doubleValue();
         warmUp = par("warmUp").doubleValue();
 
         msgSent = 0;
@@ -45,11 +25,23 @@ void SdvnPing::initialize(int stage) {
         messagesEvent = new cMessage("Send", 0);
         scheduleAt(simTime() + warmUp + uniform(0, 1), messagesEvent);
 
+        attackMode = par("attackMode").longValue();
+        attackerRate = par("attackerRate").doubleValue();
         attacking = false;
-        attacker = attackMode != 0 && uniform(0,1) < attackerRate;
+
+        victims = vector<long>();
+        strcpy(buffer, par("victims").stringValue());
+        token = strtok(buffer, ",");
+        while(token != NULL) {
+            victims.push_back(atol(token));
+            token = strtok(NULL, ",");
+        }
+        size = victims.size();
+
+        auto me = victims.begin();
+        while(me != victims.end() && *me != vehicleId) me++;
+        attacker = attackMode != 0 && uniform(0,1) < attackerRate && me == victims.end();
         if (attacker) {
-            k = 0;
-            WATCH(victimId);
             attackEvent = new cMessage("Attack", 1);
 
             // supporting multiple attacks
@@ -60,7 +52,7 @@ void SdvnPing::initialize(int stage) {
                 attackSize.push_back(atol(token));
                 token = strtok(NULL, ",");
             }
-            size = attackSize.size();
+            ASSERT(attackSize.size() == size);
 
             duration = vector<long>();
             strcpy(buffer, par("duration").stringValue());
@@ -84,8 +76,6 @@ void SdvnPing::initialize(int stage) {
                 scheduleAt(startTime[k], attackEvent);
             } else if (simTime() > startTime[k] && simTime() < startTime[k] + duration[k]) { // Vehicle shows up during the attack
                 scheduleAt(simTime()+0.0001, attackEvent);
-            } else { // Vehicle shows up after the attack
-               // does nothing
             }
         } else {
             attackEvent = nullptr;
@@ -96,7 +86,6 @@ void SdvnPing::initialize(int stage) {
 
 void SdvnPing::handleMessage(cMessage *msg) {
     if(msg->isSelfMessage()) {
-        cModule* vehicle;
         AppMessage* packet;
         std::stringstream ss;
         int destinationId, repeat;
@@ -107,11 +96,11 @@ void SdvnPing::handleMessage(cMessage *msg) {
             // Checks if perform a flooding attack or not
             if(attacker && attacking && attackMode == A_DDOS) {
                 // Source address will be spoofed on switch module
-                destinationId = victimId;
+                destinationId = victims[k];
                 repeat = attackSize[k];
             } else {
                 destinationId = getRandomVehicle()->getIndex();
-                repeat = 1;
+                repeat = burstSize;
             }
 
             for(int i = 0; i < repeat; i++) {
@@ -139,16 +128,8 @@ void SdvnPing::handleMessage(cMessage *msg) {
         case 1: // Start or Stop Attack!
             if(!attacking) { // Starting attacks
                 attacking = true;
-                std::cout << "Vehicle [" << vehicleId << "] starting attack\n";
-
-                if(victimId == NO_VEHICLE) { // Initialize if needed
-                    do {
-                        // The vehicle cannot be an attacker
-                        vehicle = getRandomVehicle();
-                        victimId = vehicle->getIndex();
-                    } while(((SdvnPing*)vehicle->getModuleByPath(".appl"))->attacker);
-                    recordScalar("Victim choosed", victimId);
-                }
+                std::cout << "Vehicle [" << vehicleId << "] starting attack on ["<< victims[k] << "]\n";
+                if(!first) first = true;
 
                 // Stop the message event for black hole and overflow attack
                 //if(attackMode == A_BLACK_HOLE || attackMode == A_OVERFLOW) cancelEvent(messagesEvent);
@@ -156,8 +137,12 @@ void SdvnPing::handleMessage(cMessage *msg) {
 
             } else { // Stopping attacks
                 attacking = false;
-                victimId = NO_VEHICLE;
-                k++;
+                std::cout << "Vehicle [" << vehicleId << "] stopping attack on ["<< victims[k] << "]\n";
+                if(first) {
+                    k++;
+                    first = false;
+                }
+
                 // Checking for future attacks
                 if(k < size) {
                     if (simTime() < startTime[k]) { // Vehicle shows up before attack
@@ -208,7 +193,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
 }
 
 void SdvnPing::schedule() {
-    scheduleAt(simTime() + packetInterval, messagesEvent);
+    scheduleAt(simTime() + burstInterval, messagesEvent);
 }
 
 cModule* SdvnPing::getRandomVehicle() {
@@ -233,14 +218,13 @@ void SdvnPing::finish() {
     }
 
     if(attacker) {
-        recordScalar("attacker", 1);
+        recordScalar("attacker", true);
         if(attackEvent->isScheduled()) {
             cancelAndDelete(attackEvent);
         } else {
             delete attackEvent;
         }
     }
-
     recordScalar("Messages Sent", msgSent);
     recordScalar("Messages Received", msgRecv);
 }

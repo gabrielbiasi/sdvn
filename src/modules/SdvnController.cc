@@ -2,11 +2,6 @@
 
 Define_Module(SdvnController);
 
-using std::map;
-using std::vector;
-using std::stringstream;
-using std::find;
-
 void SdvnController::initialize(int stage) {
     if (stage == 0) {
         if(hasGUI()) {
@@ -79,7 +74,8 @@ int SdvnController::runSimpleDijkstra(int source, int destination) {
          // Getting the shortest distance
          int shortV = -1, shortDist = 9999;
 
-         std::vector<int>::iterator j, i = listV.begin();
+         auto i = listV.begin();
+         auto j = listV.begin();
          for(; i != listV.end(); i++) {
              if(dist[*i] < shortDist) {
                  shortV = *i;
@@ -195,7 +191,7 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
         stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
         stdDevFlow = getMeanPlusStdDev(numFlows[vehicle]);
 
-        if(vehicle == 17 && simTime() >= 45.0 && simTime() <= 80.0) {
+        if(vehicle == 64 && simTime() >= 70.0 && simTime() <= 90.0) {
             std::cout << "numPackets [";
             for(auto ww : numPackets[vehicle]) {
                 std::cout << ww << ", ";
@@ -504,7 +500,7 @@ void SdvnController::clearFarNeighbors() {
 
 int SdvnController::findTarget(int id) {
     int i, numRsu;
-    std::stringstream ss;
+    stringstream ss;
     SdvnController* ctr;
     cModule *sys = getSystemModule();
 

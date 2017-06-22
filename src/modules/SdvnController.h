@@ -10,7 +10,9 @@
 #include "messages/NeighborMessage_m.h"
 
 using std::map;
+using std::find;
 using std::vector;
+using std::stringstream;
 
 class SdvnController : public cSimpleModule {
 

@@ -227,6 +227,7 @@ $O/modules/SdvnController.o: modules/SdvnController.cc \
 $O/modules/SdvnMobility.o: modules/SdvnMobility.cc \
 	SdvnTypes.h \
 	application/SdvnPing.h \
+	messages/AppMessage_m.h \
 	modules/SdvnMobility.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/NicEntry.h \
@@ -242,6 +243,7 @@ $O/modules/SdvnMobility.o: modules/SdvnMobility.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
 	$(VEINS_PROJ)/src/veins/base/utils/Move.h \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
+	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIBuffer.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIColor.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICommandInterface.h \

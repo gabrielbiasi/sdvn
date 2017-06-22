@@ -17,14 +17,16 @@ package sdvn.application;
 
 simple SdvnPing {
 	parameters:
-	    int    attackMode = default(0);
-	    double attackerRate = default(0.1);
-		double warmUp = default(0s) @unit(s);
-		double packetInterval = default(1s) @unit(s);
+		double warmUp        = default(0s) @unit(s);
+		double burstSize     = default(1);
+		double burstInterval = default(1s) @unit(s);
 
-	    string startTime = default("60");
-	    string duration = default("60");
-	    string attackSize = default("25");
+	    int    attackMode    = default(0);
+	    double attackerRate  = default(0.1);
+	    string startTime     = default("");
+	    string duration      = default("");
+	    string attackSize    = default("");
+	    string victims       = default("");
 
     gates:
         output toSwitch;
