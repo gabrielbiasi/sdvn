@@ -24,13 +24,10 @@ Define_Module(SdvnPing);
 int SdvnPing::victimId = NO_VEHICLE;
 
 void SdvnPing::initialize(int stage) {
+    char *token, buffer[100];
     if (stage == 0) {
-
         attackMode = par("attackMode").longValue();
         attackerRate = par("attackerRate").doubleValue();
-        startTime = par("startTime").doubleValue();
-        duration = par("duration").doubleValue();
-        attackSize = par("attackSize").longValue();
 
         toSwitch = findGate("toSwitch");
         fromSwitch = findGate("fromSwitch");
@@ -51,11 +48,41 @@ void SdvnPing::initialize(int stage) {
         attacking = false;
         attacker = attackMode != 0 && uniform(0,1) < attackerRate;
         if (attacker) {
+            k = 0;
             WATCH(victimId);
             attackEvent = new cMessage("Attack", 1);
-            if (simTime() < startTime) { // Vehicle shows up before attack
-                scheduleAt(startTime, attackEvent);
-            } else if (simTime() > startTime && simTime() < startTime + duration) { // Vehicle shows up during the attack
+
+            // supporting multiple attacks
+            attackSize = vector<long>();
+            strcpy(buffer, par("attackSize").stringValue());
+            token = strtok(buffer, ",");
+            while(token != NULL) {
+                attackSize.push_back(atol(token));
+                token = strtok(NULL, ",");
+            }
+            size = attackSize.size();
+
+            duration = vector<long>();
+            strcpy(buffer, par("duration").stringValue());
+            token = strtok(buffer, ",");
+            while(token != NULL) {
+                duration.push_back(atol(token));
+                token = strtok(NULL, ",");
+            }
+            ASSERT(duration.size() == size);
+
+            startTime = vector<long>();
+            strcpy(buffer, par("startTime").stringValue());
+            token = strtok(buffer, ",");
+            while(token != NULL) {
+                startTime.push_back(atol(token));
+                token = strtok(NULL, ",");
+            }
+            ASSERT(startTime.size() == size);
+
+            if (simTime() < startTime[k]) { // Vehicle shows up before attack
+                scheduleAt(startTime[k], attackEvent);
+            } else if (simTime() > startTime[k] && simTime() < startTime[k] + duration[k]) { // Vehicle shows up during the attack
                 scheduleAt(simTime()+0.0001, attackEvent);
             } else { // Vehicle shows up after the attack
                // does nothing
@@ -81,7 +108,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
             if(attacker && attacking && attackMode == A_DDOS) {
                 // Source address will be spoofed on switch module
                 destinationId = victimId;
-                repeat = attackSize;
+                repeat = attackSize[k];
             } else {
                 destinationId = getRandomVehicle()->getIndex();
                 repeat = 1;
@@ -112,6 +139,7 @@ void SdvnPing::handleMessage(cMessage *msg) {
         case 1: // Start or Stop Attack!
             if(!attacking) { // Starting attacks
                 attacking = true;
+                std::cout << "Vehicle [" << vehicleId << "] starting attack\n";
 
                 if(victimId == NO_VEHICLE) { // Initialize if needed
                     do {
@@ -119,15 +147,26 @@ void SdvnPing::handleMessage(cMessage *msg) {
                         vehicle = getRandomVehicle();
                         victimId = vehicle->getIndex();
                     } while(((SdvnPing*)vehicle->getModuleByPath(".appl"))->attacker);
+                    recordScalar("Victim choosed", victimId);
                 }
 
                 // Stop the message event for black hole and overflow attack
-                if(attackMode == A_BLACK_HOLE || attackMode == A_OVERFLOW) cancelEvent(messagesEvent);
-                scheduleAt(startTime + duration + 0.1, attackEvent);
+                //if(attackMode == A_BLACK_HOLE || attackMode == A_OVERFLOW) cancelEvent(messagesEvent);
+                scheduleAt(startTime[k] + duration[k] + 0.1, attackEvent);
 
             } else { // Stopping attacks
                 attacking = false;
-                if(!messagesEvent->isScheduled()) schedule();
+                victimId = NO_VEHICLE;
+                k++;
+                // Checking for future attacks
+                if(k < size) {
+                    if (simTime() < startTime[k]) { // Vehicle shows up before attack
+                        scheduleAt(startTime[k], attackEvent);
+                    } else if (simTime() > startTime[k] && simTime() < startTime[k] + duration[k]) { // Vehicle shows up during the attack
+                        scheduleAt(simTime()+0.0001, attackEvent);
+                    }
+                }
+                //if(!messagesEvent->isScheduled()) schedule();
             }
 
             break;
@@ -194,7 +233,7 @@ void SdvnPing::finish() {
     }
 
     if(attacker) {
-        recordScalar("Victim ID", victimId);
+        recordScalar("attacker", 1);
         if(attackEvent->isScheduled()) {
             cancelAndDelete(attackEvent);
         } else {

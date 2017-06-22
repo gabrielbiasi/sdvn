@@ -19,13 +19,13 @@ simple SdvnPing {
 	parameters:
 	    int    attackMode = default(0);
 	    double attackerRate = default(0.1);
-	    double startTime = default(60s) @unit(s);
-	    double duration = default(60s) @unit(s);
-	    
-	    
 		double warmUp = default(0s) @unit(s);
 		double packetInterval = default(1s) @unit(s);
-		int    attackSize = default(25);
+
+	    string startTime = default("60");
+	    string duration = default("60");
+	    string attackSize = default("25");
+
     gates:
         output toSwitch;
         input  fromSwitch;

@@ -17,9 +17,12 @@
 #define __SDVN_SDVNPING_H_
 
 #include <omnetpp.h>
+#include <stdlib.h>
+#include <string.h>
 #include "SdvnTypes.h"
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 
+using namespace std;
 using namespace omnetpp;
 using Veins::TraCIScenarioManagerAccess;
 
@@ -56,12 +59,15 @@ class SdvnPing : public cSimpleModule
     // Attacks Settings
     bool attacker;
     static int victimId; // All attackers will know the victimId
-    int attackSize;
     bool attacking;
     int attackMode;
     double attackerRate;
-    double startTime;
-    double duration;
+
+    // Multiple attacks on the same run
+    vector<long> attackSize;
+    vector<long> startTime;
+    vector<long> duration;
+    int k, size;
 };
 
 #endif
