@@ -404,7 +404,7 @@ void SdvnController::sendController(cMessage* msg) {
 }
 
 void SdvnController::finish() {
-    double TP, FN, FP, TN;
+    double TP, FN, FP, TN, DR, FPR;
     cSimpleModule::finish();
 
     for(auto j : graph) j.second.clear(); // free neighbors lists
@@ -443,8 +443,14 @@ void SdvnController::finish() {
             if(r == confirmed.end()) TN++;
         }
 
-        recordScalar("Detectation Rate (DR)", (TP/(TP+FN))*100);
-        recordScalar("False Positive Rate (FPR)", (FP/(FP+TN))*100);
+        DR = (TP/(TP+FN))*100;
+        FPR = (FP/(FP+TN))*100;
+
+        recordScalar("Detection Rate (DR)", DR);
+        recordScalar("False Positive Rate (FPR)", FPR);
+
+        std::cout << "DR: " << DR << "%\n";
+        std::cout << "FPR: " << FPR << "%\n";
 
         numPackets.clear();
         numFlows.clear();
