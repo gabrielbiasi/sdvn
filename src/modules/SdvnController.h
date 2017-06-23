@@ -67,6 +67,10 @@ public:
     int findTarget(int id);
     bool findLocalNode(int id);
     map<int, long> eachNumFlow;
+
+    // Sentinel Statistics
+    vector<long> confirmed;
+    vector<long> real;
 };
 
 #endif

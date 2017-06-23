@@ -156,6 +156,9 @@ $O/application/SdvnPing.o: application/SdvnPing.cc \
 	SdvnTypes.h \
 	application/SdvnPing.h \
 	messages/AppMessage_m.h \
+	messages/ControllerMessage_m.h \
+	messages/NeighborMessage_m.h \
+	modules/SdvnController.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/NicEntry.h \
 	$(VEINS_PROJ)/src/veins/base/modules/BaseWorldUtility.h \
@@ -228,6 +231,9 @@ $O/modules/SdvnMobility.o: modules/SdvnMobility.cc \
 	SdvnTypes.h \
 	application/SdvnPing.h \
 	messages/AppMessage_m.h \
+	messages/ControllerMessage_m.h \
+	messages/NeighborMessage_m.h \
+	modules/SdvnController.h \
 	modules/SdvnMobility.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/NicEntry.h \

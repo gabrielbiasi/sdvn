@@ -227,6 +227,14 @@ void SdvnPing::finish() {
             delete attackEvent;
         }
     }
+
+    // Sending victims IDs to controller
+    // for statistics purposes
+    SdvnController* c = dynamic_cast<SdvnController*>(getSystemModule()->getSubmodule("controller"));
+    if(c->real.empty())
+        for(auto v : victims)
+            c->real.push_back(v);
+
     recordScalar("Messages Sent", msgSent);
     recordScalar("Messages Received", msgRecv);
 }

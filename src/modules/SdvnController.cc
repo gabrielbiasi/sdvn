@@ -41,6 +41,9 @@ void SdvnController::initialize(int stage) {
         numPackets = map<int,vector<long>>();
         numFlows = map<int,vector<long>>();
 
+        confirmed = vector<long>();
+        real = vector<long>();
+
         flowThreshold = par("flowThreshold").doubleValue();
         numThreshold = par("numThreshold").doubleValue();
         normalCheck = par("normalCheck").longValue();
@@ -208,6 +211,11 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                     EV_INFO << "SDVN Controller: ATTACK!\n";
                     EV_INFO << "SDVN Controller: Attack confirmed on Vehicle [" << vehicle << "]\n";
                     suspicious.erase(suspect);
+
+                    // -- Statistics
+                    auto me = find(confirmed.begin(), confirmed.end(), vehicle);
+                    if(me != confirmed.end()) confirmed.push_back(vehicle);
+                    // --
                 } else {
                     EV_INFO << "SDVN Controller: Vehicle [" << vehicle;
                     EV_INFO << "] still over attack.\n";
@@ -393,15 +401,33 @@ void SdvnController::sendController(cMessage* msg) {
 }
 
 void SdvnController::finish() {
+    double TP, FN, FP, TN;
     cSimpleModule::finish();
 
-    for(auto &j : graph) j.second.clear(); // free neighbors lists
+    for(auto j : graph) j.second.clear(); // free neighbors lists
 
     if(sentinel){
         for(auto vehicle : flowMods) // for all vehicles
             for(auto flow : vehicle.second) // for all flows on each vehicle
                 delete flow;
     }
+
+    TP = FN = FP = TN = 0;
+    for(auto v : confirmed) {
+        auto r = find(real.begin(), real.end(), v);
+        if(r != real.end())
+            TP++;
+        else
+            FP++;
+    }
+    for(auto v : real) {
+        auto r = find(confirmed.begin(), confirmed.end(), v);
+        if(r == confirmed.end())
+            FN++;
+    }
+
+    recordScalar("Detectation Rate (DR)", (TP/(TP+FN)));
+    //recordScalar("False Positive Rate (FPR)", (FP/(FP+TN)));
 
     graph.clear();
     timestamps.clear();

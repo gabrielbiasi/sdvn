@@ -22,6 +22,7 @@
 
 #include "SdvnTypes.h"
 #include "messages/AppMessage_m.h"
+#include "modules/SdvnController.h"
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 
 using namespace omnetpp;
