@@ -40,7 +40,10 @@ void SdvnPing::initialize(int stage) {
 
         auto me = victims.begin();
         while(me != victims.end() && *me != vehicleId) me++;
-        attacker = attackMode != 0 && uniform(0,1) < attackerRate && me == victims.end();
+        attacker = attackMode != 0 // this run has an attack?
+                && k < size // is there some attack to happen yet?
+                && me == victims.end() // am I a victim?
+                && uniform(0,1) < attackerRate; // Chance to be an attacker
         if (attacker) {
             attackEvent = new cMessage("Attack", 1);
 
