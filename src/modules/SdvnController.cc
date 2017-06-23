@@ -176,6 +176,7 @@ void SdvnController::updateNetworkGraph(cMessage* message) {
 void SdvnController::executeSentinel(int vehicle, long packetValue, long flowValue) {
     bool is_suspect, is_victim;
     double stdDevPacket, stdDevFlow;
+    char buf[25];
     ControllerMessage* new_flow;
 
     auto suspect = find(suspicious.begin(), suspicious.end(), vehicle);
@@ -214,7 +215,9 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
 
                     // -- Statistics
                     auto me = find(confirmed.begin(), confirmed.end(), vehicle);
-                    if(me != confirmed.end()) confirmed.push_back(vehicle);
+                    if(me == confirmed.end()) confirmed.push_back(vehicle);
+                    sprintf(buf, "Victim Detected [%d]", vehicle);
+                    recordScalar(buf, simTime());
                     // --
                 } else {
                     EV_INFO << "SDVN Controller: Vehicle [" << vehicle;
@@ -410,29 +413,45 @@ void SdvnController::finish() {
         for(auto vehicle : flowMods) // for all vehicles
             for(auto flow : vehicle.second) // for all flows on each vehicle
                 delete flow;
-    }
 
-    TP = FN = FP = TN = 0;
-    for(auto v : confirmed) {
-        auto r = find(real.begin(), real.end(), v);
-        if(r != real.end())
-            TP++;
-        else
-            FP++;
-    }
-    for(auto v : real) {
-        auto r = find(confirmed.begin(), confirmed.end(), v);
-        if(r == confirmed.end())
-            FN++;
-    }
+        TP = FN = FP = TN = 0;
+        for(auto v : confirmed) {
+            auto r = find(real.begin(), real.end(), v);
+            if(r != real.end())
+                TP++;
+            else
+                FP++;
+        }
 
-    recordScalar("Detectation Rate (DR)", (TP/(TP+FN)));
-    //recordScalar("False Positive Rate (FPR)", (FP/(FP+TN)));
+        // If true victims are not in confirmed,
+        // we have a false negative.
+        for(auto v : real) {
+            auto r = find(confirmed.begin(), confirmed.end(), v);
+            if(r == confirmed.end()) FN++;
+        }
+
+        // Removing from "graph" the real
+        // victims to get TN value next
+        for(auto v : real) {
+            graph.erase(v);
+        }
+
+        // The residual IDs on "graph" are
+        // only normal vehicles without the real victims.
+        for(auto v : graph) {
+            auto r = find(confirmed.begin(), confirmed.end(), v.first);
+            if(r == confirmed.end()) TN++;
+        }
+
+        recordScalar("Detectation Rate (DR)", (TP/(TP+FN))*100);
+        recordScalar("False Positive Rate (FPR)", (FP/(FP+TN))*100);
+
+        numPackets.clear();
+        numFlows.clear();
+    }
 
     graph.clear();
     timestamps.clear();
-    numPackets.clear();
-    numFlows.clear();
 }
 
 void SdvnController::buildFlowTree(int victim) {
@@ -473,7 +492,7 @@ void SdvnController::buildFlowTree(int victim) {
  */
 
 bool SdvnController::findLocalNode(int id) {
-    map<int,vector<int>>::iterator it = graph.find(id);
+    auto it = graph.find(id);
     return (it != graph.end());
 }
 
