@@ -420,20 +420,37 @@ void SdvnController::finish() {
                 delete flow;
 
         TP = FN = FP = TN = 0;
+        std::cout << "----------------------------------\n";
+        std::cout << "------ Sentinel Statistics -------\n";
+        std::cout << "----------------------------------\n";
+        std::cout << "\nTrue Positives: [";
         for(auto v : confirmed) {
             auto r = find(real.begin(), real.end(), v);
-            if(r != real.end())
+            if(r != real.end()) { // confirmed inside the real ones are "True Positives"
+                std::cout << v << ", ";
                 TP++;
-            else
-                FP++;
+            }
         }
 
-        // If true victims are not in confirmed,
-        // we have a false negative.
+        // A little overprocessing but just to print.
+        std::cout << "]\nFalse Positives: [";
+        for(auto v : confirmed) {
+            auto r = find(real.begin(), real.end(), v);
+            if(r == real.end()) { // confirmed outside the real ones are "False Positives"
+                std::cout << v << ", ";
+                FP++;
+            }
+        }
+
+        std::cout << "]\nFalse Negatives: [";
         for(auto v : real) {
             auto r = find(confirmed.begin(), confirmed.end(), v);
-            if(r == confirmed.end()) FN++;
+            if(r == confirmed.end()){ // real ones outside of confirmed are "False Negatives"
+                std::cout << v << ", ";
+                FN++;
+            }
         }
+        std::cout << "]\n\n";
 
         // Removing from "graph" the real
         // victims to get TN value next
@@ -445,7 +462,7 @@ void SdvnController::finish() {
         // only normal vehicles without the real victims.
         for(auto v : graph) {
             auto r = find(confirmed.begin(), confirmed.end(), v.first);
-            if(r == confirmed.end()) TN++;
+            if(r == confirmed.end()) TN++; // not confirmed outside the real ones are "True Negatives"
         }
 
         DR = (TP/(TP+FN))*100;
@@ -456,6 +473,7 @@ void SdvnController::finish() {
 
         std::cout << "DR: " << DR << "%\n";
         std::cout << "FPR: " << FPR << "%\n";
+        std::cout << "----------------------------------\n";
 
         numPackets.clear();
         numFlows.clear();
