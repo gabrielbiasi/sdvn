@@ -186,7 +186,7 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
     is_victim = (victim != victims.end());
 
     // If we do not have "normalCheck" values to work, just add the values and ignore.
-    if(numPackets[vehicle].size() > normalCheck && numFlows[vehicle].size() > normalCheck) {
+    if(numPackets[vehicle].size() >= normalCheck && numFlows[vehicle].size() >= normalCheck) {
 
         /*
          * Phase 1: Detecting the attack
@@ -269,24 +269,29 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                 abnormalPackets[vehicle] = 0;
                 abnormalFlows[vehicle] = 0;
                 suspicious.erase(suspect);
-            } else if(is_victim) {
-                if(victims[vehicle] > 2*abnormalCheck) {
-                    EV_INFO << "SDVN Controller: Vehicle [";
-                    EV_INFO << vehicle << "] with enough normal values, attack has stopped.\n";
-                    auto tt = victims.find(vehicle);
-                    victims.erase(tt);
-                    is_victim = false;
-                } else {
-                    EV_INFO << "SDVN Controller: Vehicle [";
-                    EV_INFO << vehicle << "] victim with normal values but still a victim.\n";
-                    victims[vehicle]++;
+                is_suspect = false;
+            } else if(is_victim && victims[vehicle] > 2*abnormalCheck) {
+                EV_INFO << "SDVN Controller: Vehicle [";
+                EV_INFO << vehicle << "] with enough normal values, attack has stopped.\n";
+                abnormalPackets[vehicle] = 0;
+                abnormalFlows[vehicle] = 0;
+                victims.erase(victim);
+                is_victim = false;
 
-                    // The return is called here in order to bypass the code
-                    // where the flow rules are released and keep all flow rules
-                    // until the possible attack be resolved.
-                    eachNumFlow[vehicle] = 0;
-                    return;
-                }
+                // -- Statistics
+                sprintf(buf, "Victim Removed [%d]", vehicle);
+                recordScalar(buf, simTime());
+                // --
+            } else if(is_victim) {
+                EV_INFO << "SDVN Controller: Vehicle [";
+                EV_INFO << vehicle << "] victim with normal values but still a victim.\n";
+                victims[vehicle]++;
+
+                // The return is called here in order to bypass the code
+                // where the flow rules are released and keep all flow rules
+                // until the possible attack be resolved.
+                eachNumFlow[vehicle] = 0;
+                return;
             }
 
             if(!is_victim && !is_suspect){

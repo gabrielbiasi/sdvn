@@ -6,7 +6,7 @@ int SdvnPing::k = 0;
 bool SdvnPing::first = false;
 
 void SdvnPing::initialize(int stage) {
-    char *token, buffer[100];
+    char *token, buffer[200];
     if (stage == 0) {
         toSwitch = findGate("toSwitch");
         fromSwitch = findGate("fromSwitch");
@@ -221,6 +221,7 @@ void SdvnPing::finish() {
     }
 
     if(attacker) {
+        recordScalar("Attacker", true);
         if(attackEvent->isScheduled()) {
             cancelAndDelete(attackEvent);
         } else {
