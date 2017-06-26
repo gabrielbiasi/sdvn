@@ -420,6 +420,7 @@ void SdvnController::finish() {
                 delete flow;
 
         TP = FN = FP = TN = 0;
+        std::cout << endl;
         std::cout << "----------------------------------\n";
         std::cout << "------ Sentinel Statistics -------\n";
         std::cout << "----------------------------------\n";
