@@ -1,27 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scave:Analysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:scave="http://www.omnetpp.org/omnetpp/scave">
   <inputs>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.sca"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.vec"/>
     <inputs name="/sdvn/simulations/results/Centralized_DDoS-0.sca"/>
     <inputs name="/sdvn/simulations/results/Centralized_DDoS-0.vec"/>
+    <inputs name="/sdvn/simulations/results/Centralized_DDoS-1.sca"/>
+    <inputs name="/sdvn/simulations/results/Centralized_DDoS-1.vec"/>
+    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.sca"/>
+    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.vec"/>
+    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-1.sca"/>
+    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-1.vec"/>
   </inputs>
   <datasets>
     <datasets name="mt">
       <items xsi:type="scave:Group">
-        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.vec) AND attr:configname(Centralized_DDoS_with_Sentinel) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[30].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
-        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS-0.vec) AND attr:configname(Centralized_DDoS) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[30].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
-        <items xsi:type="scave:Apply" operation="crop">
-          <params name="t1" value="108"/>
-          <params name="t2" value="200"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS-0.vec) AND attr:configname(Centralized_DDoS) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS-1.vec) AND attr:configname(Centralized_DDoS) AND attr:runnumber(1) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.vec) AND attr:configname(Centralized_DDoS_with_Sentinel) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-1.vec) AND attr:configname(Centralized_DDoS_with_Sentinel) AND attr:runnumber(1) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Apply" operation="slidingwinavg">
+          <params name="windowSize" value="10"/>
         </items>
-        <items xsi:type="scave:LineChart" name="" lineNameFormat="">
-          <properties name="Y.Axis.Max" value="450.0"/>
+        <items xsi:type="scave:Apply" operation="slidingwinavg">
+          <params name="windowSize" value="5"/>
+        </items>
+        <items xsi:type="scave:Apply" operation="winavg">
+          <params name="windowSize" value="3"/>
+        </items>
+        <items xsi:type="scave:LineChart" name="Packets Processed Over Time" lineNameFormat="">
+          <properties name="Graph.Title" value=" "/>
+          <properties name="X.Axis.Title" value="Simulation Time (s)"/>
+          <properties name="Y.Axis.Title" value="Packets Processed"/>
+          <properties name="Y.Axis.Max" value="500.0"/>
+          <properties name="Legend.Display" value="true"/>
+          <properties name="Legend.Border" value="true"/>
+          <properties name="Legend.Font" value="Arial-regular-9"/>
+          <properties name="Legend.Position" value="Inside"/>
+          <properties name="Legend.Anchoring" value="NorthWest"/>
+          <properties name="X.Axis.Min" value="50.0"/>
+          <properties name="X.Axis.Max" value="145.0"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-0-20170627-12:34:20-3624 Centralized_DDoS_with_Sentinel" value="w/ Sentinel"/>
+          <properties name="Line.Name/Centralized_DDoS-0-20170627-12:24:09-7400 Centralized_DDoS" value="w/o Sentinel"/>
+          <properties name="Line.Name/Centralized_DDoS-0-20170627-14:16:38-1564 Centralized_DDoS" value="w/o Sentinel"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-0-20170627-14:27:47-1512 Centralized_DDoS_with_Sentinel" value="w/ Sentinel"/>
+          <properties name="Line.Name/Centralized_DDoS-0-20170627-15:50:30-7068 0 Centralized_DDoS $attackSize=&quot;5&quot;" value="w/o Sentinel 5x"/>
+          <properties name="Line.Name/Centralized_DDoS-1-20170627-15:58:04-224 1 Centralized_DDoS $attackSize=&quot;10&quot;" value="w/o Sentinel 10x"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-0-20170627-19:13:42-4016 0 Centralized_DDoS_with_Sentinel $attackSize=&quot;5&quot;" value="w/ Sentinel 5x"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-1-20170627-19:19:24-1976 1 Centralized_DDoS_with_Sentinel $attackSize=&quot;10&quot;" value="w/ Sentinel 10x"/>
+          <properties name="Line.Name/Centralized_DDoS-0-20170627-21:07:25-3392 0 Centralized_DDoS $attackSize=&quot;5&quot;" value="w/o Sentinel 5x"/>
+          <properties name="Line.Name/Centralized_DDoS-1-20170627-21:14:27-4816 1 Centralized_DDoS $attackSize=&quot;10&quot;" value="w/o Sentinel 10x"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-0-20170627-21:26:57-7776 0 Centralized_DDoS_with_Sentinel $attackSize=&quot;5&quot;" value="w/ Sentinel 5x"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-1-20170627-21:33:05-2648 1 Centralized_DDoS_with_Sentinel $attackSize=&quot;10&quot;" value="w/ Sentinel 10x"/>
+          <properties name="Symbols.Type" value="Triangle"/>
+          <properties name="Symbols.Type/Centralized_DDoS-0-20170627-21:07:25-3392 0 Centralized_DDoS $attackSize=&quot;5&quot;" value="Square"/>
+          <properties name="Symbols.Size/Centralized_DDoS-1-20170627-21:14:27-4816 1 Centralized_DDoS $attackSize=&quot;10&quot;" value="5"/>
+          <properties name="Line.Color/Centralized_DDoS-0-20170627-21:07:25-3392 0 Centralized_DDoS $attackSize=&quot;5&quot;" value="#0000A0"/>
+          <properties name="Symbols.Type/Centralized_DDoS_with_Sentinel-0-20170627-21:26:57-7776 0 Centralized_DDoS_with_Sentinel $attackSize=&quot;5&quot;" value="Triangle"/>
+          <properties name="Symbols.Type/Centralized_DDoS_with_Sentinel-1-20170627-21:33:05-2648 1 Centralized_DDoS_with_Sentinel $attackSize=&quot;10&quot;" value="Dot"/>
+          <properties name="Symbols.Type/Centralized_DDoS-1-20170627-21:14:27-4816 1 Centralized_DDoS $attackSize=&quot;10&quot;" value="Diamond"/>
+          <properties name="Line.Type" value="Linear"/>
+          <properties name="Line.Type/Centralized_DDoS_with_Sentinel-1-20170627-21:33:05-2648 1 Centralized_DDoS_with_Sentinel $attackSize=&quot;10&quot;" value="Linear"/>
         </items>
       </items>
     </datasets>
   </datasets>
   <chartSheets>
-    <chartSheets name="default" charts="//@datasets/@datasets.0/@items.0/@items.3"/>
+    <chartSheets name="default" charts="//@datasets/@datasets.0/@items.0/@items.7"/>
   </chartSheets>
 </scave:Analysis>
