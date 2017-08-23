@@ -50,15 +50,25 @@
           <properties name="Line.Name/Centralized_DDoS-1-20170627-21:14:27-4816 1 Centralized_DDoS $attackSize=&quot;10&quot;" value="w/o Sentinel 10x"/>
           <properties name="Line.Name/Centralized_DDoS_with_Sentinel-0-20170627-21:26:57-7776 0 Centralized_DDoS_with_Sentinel $attackSize=&quot;5&quot;" value="w/ Sentinel 5x"/>
           <properties name="Line.Name/Centralized_DDoS_with_Sentinel-1-20170627-21:33:05-2648 1 Centralized_DDoS_with_Sentinel $attackSize=&quot;10&quot;" value="w/ Sentinel 10x"/>
+          <properties name="Line.Name/Centralized_DDoS-0-20170822-10:14:05-8844 0 Centralized_DDoS $Size=&quot;5&quot;" value="Attack x5"/>
+          <properties name="Line.Name/Centralized_DDoS-1-20170822-10:14:05-8928 1 Centralized_DDoS $Size=&quot;10&quot;" value="Attack 10x"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-0-20170822-10:28:46-1956 0 Centralized_DDoS_with_Sentinel $Size=&quot;5&quot;" value="Sentinel 5x"/>
+          <properties name="Line.Name/Centralized_DDoS_with_Sentinel-1-20170822-10:28:46-5488 1 Centralized_DDoS_with_Sentinel $Size=&quot;10&quot;" value="Sentinel x10"/>
           <properties name="Symbols.Type" value="Triangle"/>
-          <properties name="Symbols.Type/Centralized_DDoS-0-20170627-21:07:25-3392 0 Centralized_DDoS $attackSize=&quot;5&quot;" value="Square"/>
-          <properties name="Symbols.Size/Centralized_DDoS-1-20170627-21:14:27-4816 1 Centralized_DDoS $attackSize=&quot;10&quot;" value="5"/>
-          <properties name="Line.Color/Centralized_DDoS-0-20170627-21:07:25-3392 0 Centralized_DDoS $attackSize=&quot;5&quot;" value="#0000A0"/>
-          <properties name="Symbols.Type/Centralized_DDoS_with_Sentinel-0-20170627-21:26:57-7776 0 Centralized_DDoS_with_Sentinel $attackSize=&quot;5&quot;" value="Triangle"/>
-          <properties name="Symbols.Type/Centralized_DDoS_with_Sentinel-1-20170627-21:33:05-2648 1 Centralized_DDoS_with_Sentinel $attackSize=&quot;10&quot;" value="Dot"/>
-          <properties name="Symbols.Type/Centralized_DDoS-1-20170627-21:14:27-4816 1 Centralized_DDoS $attackSize=&quot;10&quot;" value="Diamond"/>
+          <properties name="Symbols.Size" value="5"/>
           <properties name="Line.Type" value="Linear"/>
-          <properties name="Line.Type/Centralized_DDoS_with_Sentinel-1-20170627-21:33:05-2648 1 Centralized_DDoS_with_Sentinel $attackSize=&quot;10&quot;" value="Linear"/>
+          <properties name="Symbols.Type/Centralized_DDoS-1-20170822-10:14:05-8928 1 Centralized_DDoS $Size=&quot;10&quot;" value="Diamond"/>
+          <properties name="Symbols.Size/Centralized_DDoS-1-20170822-10:14:05-8928 1 Centralized_DDoS $Size=&quot;10&quot;" value="5"/>
+          <properties name="Line.Type/Centralized_DDoS-1-20170822-10:14:05-8928 1 Centralized_DDoS $Size=&quot;10&quot;" value="Linear"/>
+          <properties name="Symbols.Type/Centralized_DDoS_with_Sentinel-0-20170822-10:28:46-1956 0 Centralized_DDoS_with_Sentinel $Size=&quot;5&quot;" value="Triangle"/>
+          <properties name="Symbols.Size/Centralized_DDoS_with_Sentinel-0-20170822-10:28:46-1956 0 Centralized_DDoS_with_Sentinel $Size=&quot;5&quot;" value="5"/>
+          <properties name="Line.Type/Centralized_DDoS_with_Sentinel-0-20170822-10:28:46-1956 0 Centralized_DDoS_with_Sentinel $Size=&quot;5&quot;" value="Linear"/>
+          <properties name="Symbols.Type/Centralized_DDoS_with_Sentinel-1-20170822-10:28:46-5488 1 Centralized_DDoS_with_Sentinel $Size=&quot;10&quot;" value="Dot"/>
+          <properties name="Symbols.Size/Centralized_DDoS_with_Sentinel-1-20170822-10:28:46-5488 1 Centralized_DDoS_with_Sentinel $Size=&quot;10&quot;" value="5"/>
+          <properties name="Line.Type/Centralized_DDoS_with_Sentinel-1-20170822-10:28:46-5488 1 Centralized_DDoS_with_Sentinel $Size=&quot;10&quot;" value="Linear"/>
+          <properties name="Symbols.Type/Centralized_DDoS-0-20170822-10:14:05-8844 0 Centralized_DDoS $Size=&quot;5&quot;" value="Square"/>
+          <properties name="Symbols.Size/Centralized_DDoS-0-20170822-10:14:05-8844 0 Centralized_DDoS $Size=&quot;5&quot;" value="5"/>
+          <properties name="Line.Type/Centralized_DDoS-0-20170822-10:14:05-8844 0 Centralized_DDoS $Size=&quot;5&quot;" value="Linear"/>
         </items>
       </items>
     </datasets>
