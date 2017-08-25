@@ -26,7 +26,7 @@ network CentralizedSdvn extends Scenario
     parameters:
         int numRsu       = default(4);
         int architecture = default(0);
-    	@display("bgb=1050,1050;bgi=background/map,s");
+    	@display("bgb=2350,2150;bgi=background/cg,s");
 	//types:
      //   channel EthernetLine extends DatarateChannel {
     //        delay = 50ns;
