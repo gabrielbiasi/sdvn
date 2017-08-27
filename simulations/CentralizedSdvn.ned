@@ -1,49 +1,24 @@
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-// 
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
-
 package sdvn.simulations;
 
 import sdvn.modules.SdvnController;
 import sdvn.modules.LteBase;
-import sdvn.nodes.RSU_C;
-import org.car2x.veins.nodes.Scenario;
-import ned.DatarateChannel;
 
-network CentralizedSdvn extends Scenario
+network CentralizedSdvn extends Sdvn
 {	    
     parameters:
-        int numRsu       = default(4);
-        int architecture = default(0);
-    	@display("bgb=2350,2150;bgi=background/cg,s");
-	//types:
-     //   channel EthernetLine extends DatarateChannel {
-    //        delay = 50ns;
-     //       datarate = 1000Mbps;
-     //   }
+        double controllerPosX = default(0);
+        double controllerPosY = default(0);
+        double basePosX = default(0);
+        double basePosY = default(0);
+
     submodules:
-        rsu[numRsu]: RSU_C {
-            parameters:
-                @display("i=device/antennatower;is=n");
-        }
         controller: SdvnController {
             parameters:
-                @display("p=1400,700;b=9,10,oval;i=device/server");
+                @display("p=$controllerPosX,$controllerPosY;b=9,10,oval;i=device/server");
         }
         base: LteBase {
             parameters:
-                @display("p=1200,700;b=9,10,oval;i=device/antennatower");
+                @display("p=$basePosX,$basePosY;b=9,10,oval;i=device/antennatower");
         }
     connections:
         base.toController --> controller.inControl;

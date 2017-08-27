@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scave:Analysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:scave="http://www.omnetpp.org/omnetpp/scave">
   <inputs>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS-0.sca"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS-0.vec"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS-1.sca"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS-1.vec"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.sca"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.vec"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-1.sca"/>
-    <inputs name="/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-1.vec"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Flooding-0.sca"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Flooding-0.vec"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Flooding-1.sca"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Flooding-1.vec"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Sentinel-0.sca"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Sentinel-0.vec"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Sentinel-1.sca"/>
+    <inputs name="/sdvn/simulations/results/Realistic_Centralized_Sentinel-1.vec"/>
   </inputs>
   <datasets>
     <datasets name="mt">
       <items xsi:type="scave:Group">
-        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS-0.vec) AND attr:configname(Centralized_DDoS) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
-        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS-1.vec) AND attr:configname(Centralized_DDoS) AND attr:runnumber(1) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
-        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-0.vec) AND attr:configname(Centralized_DDoS_with_Sentinel) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
-        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Centralized_DDoS_with_Sentinel-1.vec) AND attr:configname(Centralized_DDoS_with_Sentinel) AND attr:runnumber(1) AND module(CentralizedSdvn.vehicle[2].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Realistic_Centralized_Flooding-0.vec) AND attr:configname(Realistic_Centralized_Flooding) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[36].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Realistic_Centralized_Flooding-1.vec) AND attr:configname(Realistic_Centralized_Flooding) AND attr:runnumber(1) AND module(CentralizedSdvn.vehicle[36].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Realistic_Centralized_Sentinel-0.vec) AND attr:configname(Realistic_Centralized_Sentinel) AND attr:runnumber(0) AND module(CentralizedSdvn.vehicle[36].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
+        <items xsi:type="scave:Add" filterPattern="file(/sdvn/simulations/results/Realistic_Centralized_Sentinel-1.vec) AND attr:configname(Realistic_Centralized_Sentinel) AND attr:runnumber(1) AND module(CentralizedSdvn.vehicle[36].switcher) AND name(&quot;Packets Processed&quot;)" type="VECTOR"/>
         <items xsi:type="scave:Apply" operation="slidingwinavg">
           <params name="windowSize" value="10"/>
         </items>

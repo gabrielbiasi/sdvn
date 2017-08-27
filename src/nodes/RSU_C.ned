@@ -4,9 +4,10 @@ import org.car2x.veins.base.modules.*;
 import org.car2x.veins.modules.nic.Nic80211p;
 import sdvn.modules.SdvnSwitch;
 
-module RSU_C
+module RSU_C like IRsu
 {
     parameters:
+        @display("i=device/antennatower;is=n");
         string nicType      = default("Nic80211p");
         double rsuDelay     = default(0.01s) @unit(s);
     gates:
