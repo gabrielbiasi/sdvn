@@ -17,6 +17,7 @@ package sdvn.modules;
 
 simple SdvnController {
    parameters:
+        @class(SdvnController);
         bool   debug         = default(false);
         bool   sentinel      = default(true);
 

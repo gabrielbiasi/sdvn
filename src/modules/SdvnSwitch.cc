@@ -6,7 +6,7 @@ void SdvnSwitch::initialize(int stage) {
     BaseWaveApplLayer::initialize(stage);
     if (stage == 0) {
         architecture = getSystemModule()->par("architecture").longValue();
-        prefixRsuId = par("prefixRsuId").longValue();
+        prefixRsuId = getSystemModule()->par("prefixRsuId").longValue();
 
         type = par("type").stdstringValue();
         if(isVehicle()) {

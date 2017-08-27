@@ -13,7 +13,6 @@ protected:
     int fromController;
     int radioIn;
 
-    bool debug;
     double power;
     double lteDelay;
     long prefixRsuId;

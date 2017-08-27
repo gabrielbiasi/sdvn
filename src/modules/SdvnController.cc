@@ -40,7 +40,7 @@ void SdvnController::initialize(int stage) {
         normalCheck = par("normalCheck").longValue();
         abnormalCheck = par("abnormalCheck").longValue();
 
-        prefixRsuId = 10000;
+        prefixRsuId = getSystemModule()->par("prefixRsuId").longValue();
         architecture = getSystemModule()->par("architecture").longValue();
     }
 }

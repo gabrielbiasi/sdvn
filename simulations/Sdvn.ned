@@ -22,7 +22,7 @@ network Sdvn
         double worldPosY;
         double managerPosX;
         double managerPosY;
-        
+
         double playgroundSizeX @unit(m);
         double playgroundSizeY @unit(m);
         double playgroundSizeZ @unit(m);
@@ -31,6 +31,8 @@ network Sdvn
         string rsuType;
         int architecture;
         int numRsu;
+        int prefixRsuId;
+
         @display("bgb=$playgroundSizeX,$playgroundSizeY;bgi=$map;bgu=m");
 
     submodules:

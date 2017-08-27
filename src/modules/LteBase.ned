@@ -18,11 +18,9 @@ package sdvn.modules;
 simple LteBase {
 	parameters:
 		@class(LteBase);
-		bool   debug = default(false);
 		double lteDelay = default(0.1s) @unit(s);
-		double power = default(0);
-		int    prefixRsuId = default(10000);
-		
+		double power    = default(0);
+
     gates:
         input  radioIn @directIn;
         output toController;

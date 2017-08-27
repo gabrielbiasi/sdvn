@@ -4,11 +4,9 @@ Define_Module(LteBase);
 
 void LteBase::initialize(int stage) {
     if (stage == 0) {
-        debug = par("debug").boolValue();
         power = par("power").doubleValue();
-
         lteDelay = par("lteDelay").doubleValue();
-        prefixRsuId = par("prefixRsuId").longValue();
+        prefixRsuId = getSystemModule()->par("prefixRsuId").longValue();
 
         // Gates
         radioIn = findGate("radioIn");
