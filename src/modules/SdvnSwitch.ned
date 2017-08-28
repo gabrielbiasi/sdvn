@@ -21,8 +21,6 @@ simple SdvnSwitch extends BaseWaveApplLayer {
 	parameters:
 		@class(SdvnSwitch);
 		
-		string type = default("Vehicle");
-		
 		double controllerBeaconsInterval = default(1s) @unit(s);
 		double standbyTime = default(5s) @unit(s);
 		

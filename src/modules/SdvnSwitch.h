@@ -48,7 +48,6 @@ class SdvnSwitch : public BaseWaveApplLayer {
         TraCICommandInterface* traci;
         TraCICommandInterface::Vehicle* traciVehicle;
 
-        string type;
         int prefixRsuId;
 
         vector<AppMessage*> packetInBuffer;

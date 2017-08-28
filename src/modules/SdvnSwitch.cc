@@ -8,14 +8,13 @@ void SdvnSwitch::initialize(int stage) {
         architecture = getSystemModule()->par("architecture").longValue();
         prefixRsuId = getSystemModule()->par("prefixRsuId").longValue();
 
-        type = par("type").stdstringValue();
+        appl = (SdvnPing*) getParentModule()->getSubmodule("appl");
+
         if(isVehicle()) {
             mobility = TraCIMobilityAccess().get(getParentModule());
             traci = mobility->getCommandInterface();
             traciVehicle = mobility->getVehicleCommandInterface();
-            appl = (SdvnPing*) getParentModule()->getSubmodule("appl");
         } else {
-            appl = nullptr;
             BaseMobility* mobi = (BaseMobility*) getParentModule()->getSubmodule("mobility");
             ASSERT(mobi);
             myId += prefixRsuId;
@@ -439,7 +438,7 @@ void SdvnSwitch::handleMessage(cMessage* msg) {
 }
 
 bool SdvnSwitch::isVehicle() {
-    return (type == string("Vehicle"));
+    return (appl != nullptr);
 }
 
 bool SdvnSwitch::hasActiveVehicle() {
