@@ -391,7 +391,7 @@ double SdvnController::getMeanPlusStdDev(const vector<long>&  li) {
     double sum = 0, mean = 0, stddev = 0;
     for(i = 0; i < size; i++) sum += li[i]; // sum all values
     mean = sum/size; // arithmetic mean
-    for(i = 0; i < size; i++) stddev += pow(i-mean, 2);
+    for(i = 0; i < size; i++) stddev += pow(li[i]-mean, 2);
     return (mean + sqrt(stddev/size)); // mean + standard derivation
 }
 
