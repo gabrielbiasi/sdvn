@@ -17,6 +17,7 @@ package sdvn.application;
 
 simple SdvnPing {
 	parameters:
+	    @class(SdvnPing);
 		double warmUp        = default(0s) @unit(s);
 		double burstSize     = default(1);
 		double burstInterval = default(1s) @unit(s);

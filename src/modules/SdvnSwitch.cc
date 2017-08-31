@@ -62,8 +62,8 @@ void SdvnSwitch::initialize(int stage) {
         droppedByRule = 0;
         droppedByStandbyOverflow = 0;
         droppedByInOverflow = 0;
+        droppedBySentinel = 0;
         WATCH(myId);
-        WATCH(botFlowId);
     }
 }
 
@@ -158,6 +158,8 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
                 if(packet->getSourceAddress() != myId) {
                     EV_INFO << "Vehicle [" << myId << "] Attacker DROP!";
                     delete packet;
+                    droppedBySentinel++;
+                    numPackets++;
                     return;
                 }
             case FORWARD:
@@ -607,9 +609,14 @@ void SdvnSwitch::finish() {
     recordScalar("Dropped by Rule", droppedByRule);
     recordScalar("Dropped by Standby Overflow", droppedByStandbyOverflow);
     recordScalar("Dropped by Packet In Overflow", droppedByInOverflow);
+    recordScalar("Dropped by Sentinel", droppedBySentinel);
+
     recordScalar("Standby Buffer Size", packetStandbyBuffer.size());
     recordScalar("Packet In Buffer Size", packetInBuffer.size());
-    recordScalar("RSU Queue Size", rsuQueue.size());
+
+    if(architecture == DISTRIBUTED){
+        recordScalar("RSU Queue Size", rsuQueue.size());
+    }
 
     if(controllerBeaconEvent->isScheduled()) {
         cancelAndDelete(controllerBeaconEvent);

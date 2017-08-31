@@ -228,7 +228,7 @@ void SdvnController::executeSentinel(int vehicle, long packetValue, long flowVal
                     for(auto bot : level.second) {
                         stdDevPacket = getMeanPlusStdDev(numPackets[vehicle]);
                         if(numPackets[bot].back() >= stdDevPacket) {
-                            new_flow = newFlow(bot, vehicle, DROP, NO_VEHICLE);
+                            new_flow = newFlow(bot, vehicle, S_DROP, NO_VEHICLE);
                             sendController(new_flow);
                         }
                     }

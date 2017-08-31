@@ -28,6 +28,7 @@ void SdvnPing::initialize(int stage) {
         attackMode = par("attackMode").longValue();
         attackerRate = par("attackerRate").doubleValue();
         attacking = false;
+        floodingPkt = 0;
 
         victims = vector<long>();
         strcpy(buffer, par("victims").stringValue());
@@ -122,7 +123,8 @@ void SdvnPing::handleMessage(cMessage *msg) {
                 EV_INFO << "Vehicle [" << vehicleId << "] Sending PING #" << msgSent <<" to Vehicle [" << destinationId << "]\n";
                 send(packet, toSwitch);
 
-                if(!attacking) msgSent++; // Do not register while attacking
+                if(!attacking) msgSent++;
+                else floodingPkt++;
             }
             if(!attacking) recordV(); // Do not register while attacking
             schedule();
@@ -222,6 +224,7 @@ void SdvnPing::finish() {
 
     if(attacker) {
         recordScalar("Attacker", true);
+        recordScalar("Spoofed Packets Sent", floodingPkt);
         if(attackEvent->isScheduled()) {
             cancelAndDelete(attackEvent);
         } else {

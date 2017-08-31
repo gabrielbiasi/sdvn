@@ -69,6 +69,7 @@ class SdvnPing : public cSimpleModule
     bool attacking;
     int attackMode;
     double attackerRate;
+    long floodingPkt;
 
     // Multiple attacks on the same run
     vector<long> attackSize;

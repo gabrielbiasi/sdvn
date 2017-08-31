@@ -19,8 +19,7 @@ import org.car2x.veins.modules.application.ieee80211p.BaseWaveApplLayer;
 simple SdvnSwitch extends BaseWaveApplLayer {
 
 	parameters:
-		@class(SdvnSwitch);
-		
+	    @class(SdvnSwitch);
 		double controllerBeaconsInterval = default(1s) @unit(s);
 		double standbyTime = default(5s) @unit(s);
 		

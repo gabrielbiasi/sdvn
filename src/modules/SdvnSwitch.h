@@ -89,11 +89,12 @@ class SdvnSwitch : public BaseWaveApplLayer {
         int architecture;
 
         // Scalars
-        int droppedRule;
-        int droppedByTTL;
-        int droppedByRule;
-        int droppedByStandbyOverflow;
-        int droppedByInOverflow;
+        long droppedRule;
+        long droppedByTTL;
+        long droppedByRule;
+        long droppedByStandbyOverflow;
+        long droppedByInOverflow;
+        long droppedBySentinel;
 
         SdvnPing* appl;
 
