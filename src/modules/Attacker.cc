@@ -127,11 +127,8 @@ void Attacker::selectNewVictim() {
 }
 
 bool Attacker::alreadyVictim(long vehicleId) {
-    for(long i : victims) {
-        if(i == vehicleId)
-            return true;
-    }
-    return false;
+    auto it = find(victims.begin(), victims.end(), vehicleId);
+    return it != victims.end();
 }
 
 double Attacker::getAttackSize(){
@@ -148,14 +145,77 @@ long Attacker::getVictimId() {
 }
 
 void Attacker::finish() {
+    long prefixRsuId;
+    double TP, FN, FP, TN, DR, FPR;
     cSimpleModule::finish();
+
     if(check->isScheduled()) {
         cancelAndDelete(check);
     } else {
         delete check;
     }
 
-    cout << "[ATTACKER] Victim choose: [";
-    for(long i : victims) cout << i << ", ";
-    cout << "]" << endl;
+    TP = FN = FP = TN = 0;
+    SdvnController* controller = dynamic_cast<SdvnController*>(getSystemModule()->getSubmodule("controller"));
+
+    if(!controller->sentinel) {
+        std::cout << "Victims: [";
+        for(auto v : victims) std::cout << v << ", ";
+        std::cout << "]" << endl;
+    } else {
+        std::cout << endl;
+        std::cout << "----------------------------------\n";
+        std::cout << "----------- Statistics -----------\n";
+        std::cout << "----------------------------------\n";
+
+        std::cout << "\nTrue Positives: [";
+        for(auto v : controller->confirmed) {
+            auto r = find(victims.begin(), victims.end(), v);
+            if(r != victims.end()) { // confirmed inside the real ones are "True Positives"
+                std::cout << v << ", ";
+                TP++;
+            }
+        }
+
+        // A little overprocessing but just to print.
+        std::cout << "]\nFalse Positives: [";
+        for(auto v : controller->confirmed) {
+            auto r = find(victims.begin(), victims.end(), v);
+            if(r == victims.end()) { // confirmed outside the real ones are "False Positives"
+                std::cout << v << ", ";
+                FP++;
+            }
+        }
+
+        std::cout << "]\nFalse Negatives: [";
+        for(auto v : victims) {
+            auto r = find(controller->confirmed.begin(), controller->confirmed.end(), v);
+            if(r == controller->confirmed.end()){ // real ones outside of confirmed are "False Negatives"
+                std::cout << v << ", ";
+                FN++;
+            }
+        }
+        std::cout << "]\n\n";
+
+        prefixRsuId = getSystemModule()->par("prefixRsuId").longValue();
+        for(auto v : controller->timestamps) {
+            if(v.first < prefixRsuId) {
+                auto r = find(victims.begin(), victims.end(), v.first);
+                if(r == victims.end()) {
+                    auto k = find(controller->confirmed.begin(), controller->confirmed.end(), v.first);
+                    if(k == controller->confirmed.end()) TN++; // not confirmed outside the real ones are "True Negatives"
+                }
+            }
+        }
+        DR = (TP/(TP+FN))*100;
+        FPR = (FP/(FP+TN))*100;
+
+        recordScalar("Detection Rate (DR)", DR);
+        recordScalar("False Positive Rate (FPR)", FPR);
+
+        std::cout << "DR: " << DR << "%\n";
+        std::cout << "FPR: " << FPR << "%\n";
+        std::cout << "----------------------------------\n";
+    }
+
 }

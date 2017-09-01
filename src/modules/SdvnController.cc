@@ -33,7 +33,6 @@ void SdvnController::initialize(int stage) {
         numFlows = map<int,vector<long>>();
 
         confirmed = vector<long>();
-        real = vector<long>();
 
         flowThreshold = par("flowThreshold").doubleValue();
         numThreshold = par("numThreshold").doubleValue();
@@ -400,77 +399,17 @@ void SdvnController::sendController(cMessage* msg) {
 }
 
 void SdvnController::finish() {
-    double TP, FN, FP, TN, DR, FPR;
     cSimpleModule::finish();
 
     for(auto j : graph) j.second.clear(); // free neighbors lists
 
-    if(sentinel){
+    if(sentinel) {
         for(auto vehicle : flowMods) // for all vehicles
             for(auto flow : vehicle.second) // for all flows on each vehicle
                 delete flow;
-
-        TP = FN = FP = TN = 0;
-        std::cout << endl;
-        std::cout << "----------------------------------\n";
-        std::cout << "------ Sentinel Statistics -------\n";
-        std::cout << "----------------------------------\n";
-        std::cout << "\nTrue Positives: [";
-        for(auto v : confirmed) {
-            auto r = find(real.begin(), real.end(), v);
-            if(r != real.end()) { // confirmed inside the real ones are "True Positives"
-                std::cout << v << ", ";
-                TP++;
-            }
-        }
-
-        // A little overprocessing but just to print.
-        std::cout << "]\nFalse Positives: [";
-        for(auto v : confirmed) {
-            auto r = find(real.begin(), real.end(), v);
-            if(r == real.end()) { // confirmed outside the real ones are "False Positives"
-                std::cout << v << ", ";
-                FP++;
-            }
-        }
-
-        std::cout << "]\nFalse Negatives: [";
-        for(auto v : real) {
-            auto r = find(confirmed.begin(), confirmed.end(), v);
-            if(r == confirmed.end()){ // real ones outside of confirmed are "False Negatives"
-                std::cout << v << ", ";
-                FN++;
-            }
-        }
-        std::cout << "]\n\n";
-
-        // Removing from "graph" the real
-        // victims to get TN value next
-        for(auto v : real) {
-            graph.erase(v);
-        }
-
-        // The residual IDs on "graph" are
-        // only normal vehicles without the real victims.
-        for(auto v : graph) {
-            auto r = find(confirmed.begin(), confirmed.end(), v.first);
-            if(r == confirmed.end()) TN++; // not confirmed outside the real ones are "True Negatives"
-        }
-
-        DR = (TP/(TP+FN))*100;
-        FPR = (FP/(FP+TN))*100;
-
-        recordScalar("Detection Rate (DR)", DR);
-        recordScalar("False Positive Rate (FPR)", FPR);
-
-        std::cout << "DR: " << DR << "%\n";
-        std::cout << "FPR: " << FPR << "%\n";
-        std::cout << "----------------------------------\n";
-
         numPackets.clear();
         numFlows.clear();
     }
-
     graph.clear();
     timestamps.clear();
 }

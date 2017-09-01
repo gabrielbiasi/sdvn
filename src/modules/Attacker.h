@@ -19,12 +19,13 @@
 #include <omnetpp.h>
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
 #include "modules/SdvnMobility.h"
+#include "modules/SdvnController.h"
 #include "application/SdvnPing.h"
 #include "SdvnTypes.h"
 
 using namespace omnetpp;
-using std::cout;
 using std::vector;
+using std::find;
 using std::advance;
 using Veins::TraCIScenarioManagerAccess;
 

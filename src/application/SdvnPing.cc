@@ -24,6 +24,7 @@ void SdvnPing::initialize(int stage) {
         // Attacker Settings
         attacking = false;
         attackSent = 0;
+        attackRecv = 0;
     }
 }
 
@@ -81,15 +82,18 @@ void SdvnPing::handleMessage(cMessage *msg) {
             EV_INFO << "Vehicle [" << vehicleId << "] PING #"<< packetId <<" received from Vehicle [" << senderId << "]\n";
             EV_INFO << "Vehicle [" << vehicleId << "] Sending PONG...\n";
 
-            packet->setSourceAddress(vehicleId);
-            packet->setDestinationAddress(senderId);
-            packet->setTTL(64);
+            if(senderId == NO_VEHICLE) {
+                attackRecv++;
+                delete packet;
+            } else {
+                packet->setSourceAddress(vehicleId);
+                packet->setDestinationAddress(senderId);
+                packet->setTTL(64);
 
-            s.replace(0, 4, "PONG");
-            packet->setPayload(s.c_str());
-
-            send(packet, toSwitch);
-
+                s.replace(0, 4, "PONG");
+                packet->setPayload(s.c_str());
+                send(packet, toSwitch);
+            }
         } else if(s.find("PONG") != string::npos) {
             // PONG received from a vehicle. Registering statistics.
             simtime_t latency = simTime()-packet->getTimestamp();
@@ -126,9 +130,8 @@ void SdvnPing::finish() {
         delete messagesEvent;
     }
 
-    if(attackSent > 0) {
-        recordScalar("Spoofed Packets Sent", attackSent);
-    }
+    if(attackRecv > 0) recordScalar("Spoofed Packets Received", attackRecv);
+    if(attackSent > 0) recordScalar("Spoofed Packets Sent", attackSent);
 
     recordScalar("Messages Sent", msgSent);
     recordScalar("Messages Received", msgRecv);

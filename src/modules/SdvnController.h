@@ -23,10 +23,8 @@ protected:
 
     bool debug;
     map<int, vector<int>> graph;
-    map<int, simtime_t> timestamps;
 
     // Sentinel Variables
-    bool sentinel;
     map<int, long> victims;
     vector<long> suspicious;
     map<int, vector<ControllerMessage*>> flowMods;
@@ -68,9 +66,11 @@ public:
     bool findLocalNode(int id);
     map<int, long> eachNumFlow;
 
+    bool sentinel;
+    map<int, simtime_t> timestamps;
+
     // Sentinel Statistics
     vector<long> confirmed;
-    vector<long> real;
 };
 
 #endif

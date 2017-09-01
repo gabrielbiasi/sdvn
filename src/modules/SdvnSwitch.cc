@@ -534,8 +534,8 @@ bool SdvnSwitch::performAttack(AppMessage* msg) {
         wsm = dynamic_cast<WaveShortMessage*>(msg);
 
         // Spoofed source address
-        msg->setSourceAddress(-171); // spoofing on app layer
-        wsm->setSenderAddress(-171); // spoofing on net layer
+        msg->setSourceAddress(NO_VEHICLE); // spoofing on app layer
+        wsm->setSenderAddress(NO_VEHICLE); // spoofing on net layer
 
         // Getting a random neighbor to forward the traffic load
         if(currentNeighbors.size() > 0 && botFlowId == NO_VEHICLE) {

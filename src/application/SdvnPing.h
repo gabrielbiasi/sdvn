@@ -66,6 +66,7 @@ class SdvnPing : public cSimpleModule
     // Attacks Settings
     bool attacking;
     long attackSent;
+    long attackRecv;
 };
 
 #endif
