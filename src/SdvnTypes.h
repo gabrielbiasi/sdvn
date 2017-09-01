@@ -22,11 +22,10 @@ enum ACTIONS {
     S_DROP = 3
 };
 
-enum ATTACKS {
+enum ATTACK_MODES {
     NO_ATTACK = 0,
-    A_BLACK_HOLE = 1,
-    A_DDOS = 2,
-    A_OVERFLOW = 3
+    DETECTION = 1,
+    MITIGATION = 2
 };
 
 #endif /* SDVNTYPES_H_ */

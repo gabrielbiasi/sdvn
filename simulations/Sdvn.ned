@@ -1,6 +1,7 @@
 package sdvn.simulations;
 
 import sdvn.nodes.IRsu;
+import sdvn.modules.Attacker;
 import org.car2x.veins.nodes.Scenario;
 
 import org.car2x.veins.base.connectionManager.ConnectionManager;
@@ -37,7 +38,9 @@ network Sdvn
 
     submodules:
         rsu[numRsu]: <rsuType> like IRsu;
-
+        attacker: Attacker {
+            @display("i=old/telnet;is=s");
+        }
         obstacles: ObstacleControl {
             @display("p=$obstaclesPosX,$obstaclesPosY;i=misc/town;is=s");
         }

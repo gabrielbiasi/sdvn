@@ -13,16 +13,17 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package sdvn.application;
+package sdvn.modules;
 
-simple SdvnPing {
-	parameters:
-	    @class(SdvnPing);
-		double warmUp        = default(0s) @unit(s);
-		double burstSize     = default(1);
-		double burstInterval = default(1s) @unit(s);
+simple Attacker {
+    parameters:
+        @display("i=old/telnet");
+        double attackScale   = default(5);
+        double attackerRate  = default(0.1);
+        int    numVictims    = default(0);
 
-    gates:
-        output toSwitch;
-        input  fromSwitch;
+        double checkInterval = default(1s)   @unit(s);
+        double startTime     = default(60s)  @unit(s);
+        double duration      = default(10s)  @unit(s);     
+        double victimWarmUp  = default(11s)  @unit(s);
 }

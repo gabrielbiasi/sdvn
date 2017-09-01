@@ -18,15 +18,14 @@
 
 #include <TraCIMobility.h>
 
-#include "application/SdvnPing.h"
-
 class SdvnMobility: public Veins::TraCIMobility {
 protected:
     virtual void initialize(int stage);
     virtual void updateDisplayString();
     virtual void finish();
+public:
+    simtime_t getTotalTime();
 
-    SdvnPing* vehicleApp;
 };
 
 #endif /* MODULES_SDVNMOBILITY_H_ */

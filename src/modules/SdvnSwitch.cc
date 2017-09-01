@@ -108,7 +108,6 @@ void SdvnSwitch::cleanFlowTable() {
 
 
 void SdvnSwitch::onData(WaveShortMessage* wsm) {
-
     // Ignore data packet not assigned to me
     if(wsm->getRecipientAddress() != myId) {
         delete wsm;
@@ -242,7 +241,7 @@ void SdvnSwitch::handleSelfMsg(cMessage* msg) {
         // Time to send my neighbors!
 
         // RSU alone on simulation
-        if(!hasActiveVehicle()){
+        if(!isVehicle() && !hasActiveVehicle()){
             cancelEvent(sendBeaconEvt); // Stop beacons
             return;
         }
@@ -522,82 +521,57 @@ void SdvnSwitch::handlePositionUpdate(cObject* obj) {
 }
 
 bool SdvnSwitch::performAttack(AppMessage* msg) {
-    int i, j, victim;
     SdvnPing* botPing;
-    ControllerMessage* cm;
     WaveShortMessage* wsm;
-    if (appl)
-        if (appl->attacker && appl->attacking)
-            switch(appl->attackMode) {
-            case A_BLACK_HOLE:
-                // Black Hole Attacker
-                // Just dropping every message that arrives
-                delete msg;
-                return true;
+    if (appl && appl->attacking) {
+        // If the message was not generate by me,
+        // return false in order to process normally
+        // and behaves like a normal vehicle.
+        if(msg->getSourceAddress() != myId) return false;
 
-            case A_DDOS:
-                // If the message was not generate by me,
-                // return false in order to process normally
-                // and behaves like a normal vehicle.
-                if(msg->getSourceAddress() != myId) return false;
+        // DDoS Attacker
+        // Send the message directly
+        wsm = dynamic_cast<WaveShortMessage*>(msg);
 
-                // DDoS Attacker
-                // Send the message directly
-                wsm = dynamic_cast<WaveShortMessage*>(msg);
+        // Spoofed source address
+        msg->setSourceAddress(-171); // spoofing on app layer
+        wsm->setSenderAddress(-171); // spoofing on net layer
 
-                // Spoofed source address
-                msg->setSourceAddress(-171); // spoofing on app layer
-                wsm->setSenderAddress(-171); // spoofing on net layer
+        // Getting a random neighbor to forward the traffic load
+        if(currentNeighbors.size() > 0 && botFlowId == NO_VEHICLE) {
+            botFlowId = currentNeighbors.at(intuniform(0,currentNeighbors.size()-1));
 
-                // Getting a random neighbor to forward the traffic load
-                if(currentNeighbors.size() > 0 && botFlowId == NO_VEHICLE) {
-                    botFlowId = currentNeighbors.at(intuniform(0,currentNeighbors.size()-1));
-                    auto map = TraCIScenarioManagerAccess().get()->getManagedHosts();
-                    for(auto jk : map) {
-                        if (jk.second->getIndex() == botFlowId) {
-                            botPing = dynamic_cast<SdvnPing*>(jk.second->getModuleByPath(".appl"));
-                            if(botPing->attacker) botFlowId = NO_VEHICLE; // If vehicle is an attacker
-                            break;
-                        }
-                    }
+            // Checking if the gateway vehicle is not an attacker too
+            auto map = TraCIScenarioManagerAccess().get()->getManagedHosts();
+            for(auto jk : map) {
+                if (jk.second->getIndex() == botFlowId) {
+                    botPing = dynamic_cast<SdvnPing*>(jk.second->getModuleByPath(".appl"));
+                    if(botPing->attacking) botFlowId = NO_VEHICLE; // If gateway vehicle is an attacker
+                    break;
                 }
-
-                if(botFlowId != NO_VEHICLE) {
-                    // Checking if current neighbor is still reachable
-                    for(int n : currentNeighbors) {
-                        if(botFlowId == n) {
-                            EV_INFO << "Vehicle [" << myId << "] sending attack burst via [" << botFlowId <<"]\n";
-                            // Victim address
-                            wsm->setRecipientAddress(botFlowId);
-                            // Send directly without checking any flow rule
-                            sendWSM(wsm);
-                            return true;
-                        }
-                    }
-                    // Flow lost, get another vehicle
-                    botFlowId = NO_VEHICLE;
-                }
-                delete wsm;
-
-                return true;
-            case A_OVERFLOW:
-                // Overflow Attacker
-                // Send maxFlowRules/2 PACKET_IN messages setting the source
-                // vehicle with the victim ID.
-                victim = msg->getSourceAddress();
-                for(i = 0; i < maxFlowRules/2; i++) {
-                    cm = new ControllerMessage();
-                    cm->setKind(012);
-                    cm->setSourceVehicle(victim);
-                    cm->setFlowAction(PACKET_IN);
-                    j = (victim-10 < 0) ? 0 : victim-10;
-                    cm->setDestinationAddress(intuniform(10, victim+10));
-                    sendController(cm);
-                }
-                return false;
             }
+        }
 
-    return false;
+        if(botFlowId != NO_VEHICLE) {
+            // Checking if current neighbor is still reachable
+            for(int n : currentNeighbors) {
+                if(botFlowId == n) {
+                    EV_INFO << "Vehicle [" << myId << "] sending attack burst via [" << botFlowId <<"]\n";
+                    // Victim address
+                    wsm->setRecipientAddress(botFlowId);
+                    // Send directly without checking any flow rule
+                    sendWSM(wsm);
+                    return true;
+                }
+            }
+            // Flow lost, get another vehicle on next time
+            botFlowId = NO_VEHICLE;
+        }
+        delete wsm;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 

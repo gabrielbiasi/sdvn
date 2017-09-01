@@ -2,11 +2,7 @@
 
 Define_Module(SdvnPing);
 
-int SdvnPing::k = 0;
-bool SdvnPing::first = false;
-
 void SdvnPing::initialize(int stage) {
-    char *token, buffer[200];
     if (stage == 0) {
         toSwitch = findGate("toSwitch");
         fromSwitch = findGate("fromSwitch");
@@ -25,66 +21,9 @@ void SdvnPing::initialize(int stage) {
         messagesEvent = new cMessage("Send", 0);
         scheduleAt(simTime() + warmUp + uniform(0, 1), messagesEvent);
 
-        attackMode = par("attackMode").longValue();
-        attackerRate = par("attackerRate").doubleValue();
+        // Attacker Settings
         attacking = false;
-        floodingPkt = 0;
-
-        victims = vector<long>();
-        strcpy(buffer, par("victims").stringValue());
-        token = strtok(buffer, ",");
-        while(token != NULL) {
-            victims.push_back(atol(token));
-            token = strtok(NULL, ",");
-        }
-        size = victims.size();
-
-        auto me = victims.begin();
-        while(me != victims.end() && *me != vehicleId) me++;
-        attacker = attackMode != 0 // this run has an attack?
-                && k < size // is there some attack to happen yet?
-                && me == victims.end() // am I a victim?
-                && uniform(0,1) < attackerRate; // Chance to be an attacker
-        if (attacker) {
-            attackEvent = new cMessage("Attack", 1);
-
-            // supporting multiple attacks
-            attackSize = vector<long>();
-            strcpy(buffer, par("attackSize").stringValue());
-            token = strtok(buffer, ",");
-            while(token != NULL) {
-                attackSize.push_back(atol(token));
-                token = strtok(NULL, ",");
-            }
-            ASSERT(attackSize.size() == size);
-
-            duration = vector<long>();
-            strcpy(buffer, par("duration").stringValue());
-            token = strtok(buffer, ",");
-            while(token != NULL) {
-                duration.push_back(atol(token));
-                token = strtok(NULL, ",");
-            }
-            ASSERT(duration.size() == size);
-
-            startTime = vector<long>();
-            strcpy(buffer, par("startTime").stringValue());
-            token = strtok(buffer, ",");
-            while(token != NULL) {
-                startTime.push_back(atol(token));
-                token = strtok(NULL, ",");
-            }
-            ASSERT(startTime.size() == size);
-
-            if (simTime() < startTime[k]) { // Vehicle shows up before attack
-                scheduleAt(startTime[k], attackEvent);
-            } else if (simTime() > startTime[k] && simTime() < startTime[k] + duration[k]) { // Vehicle shows up during the attack
-                scheduleAt(simTime()+0.0001, attackEvent);
-            }
-        } else {
-            attackEvent = nullptr;
-        }
-        WATCH(attacker);
+        attackSent = 0;
     }
 }
 
@@ -94,73 +33,42 @@ void SdvnPing::handleMessage(cMessage *msg) {
         stringstream ss;
         int destinationId, repeat;
 
-        switch(msg->getKind()) {
-        case 0:
-            // Sending Message
-            // Checks if perform a flooding attack or not
-            if(attacker && attacking && attackMode == A_DDOS) {
-                // Source address will be spoofed on switch module
-                destinationId = victims[k];
-                repeat = attackSize[k];
-            } else {
-                destinationId = getRandomVehicle()->getIndex();
-                repeat = burstSize;
-            }
-
-            for(int i = 0; i < repeat; i++) {
-                packet = new AppMessage();
-                packet->setSourceAddress(vehicleId);
-                packet->setDestinationAddress(destinationId);
-                packet->setTTL(64);
-                packet->setId(msgSent);
-
-                // Payload
-                ss.clear();
-                ss << "PING Hello!";
-                packet->setPayload(ss.str().c_str());
-
-                // Sending message
-                EV_INFO << "Vehicle [" << vehicleId << "] Sending PING #" << msgSent <<" to Vehicle [" << destinationId << "]\n";
-                send(packet, toSwitch);
-
-                if(!attacking) msgSent++;
-                else floodingPkt++;
-            }
-            if(!attacking) recordV(); // Do not register while attacking
-            schedule();
-            break;
-
-        case 1: // Start or Stop Attack!
-            if(!attacking) { // Starting attacks
-                attacking = true;
-                EV_INFO << "Vehicle [" << vehicleId << "] starting attack on ["<< victims[k] << "]\n";
-                if(!first) first = true;
-
-                // Stop the message event for black hole and overflow attack
-                //if(attackMode == A_BLACK_HOLE || attackMode == A_OVERFLOW) cancelEvent(messagesEvent);
-                scheduleAt(startTime[k] + duration[k] + 0.1, attackEvent);
-
-            } else { // Stopping attacks
-                attacking = false;
-                EV_INFO << "Vehicle [" << vehicleId << "] stopping attack.\n";
-                if(first) {
-                    k++;
-                    first = false;
-                }
-
-                // Checking for future attacks
-                if(k < size) {
-                    if (simTime() < startTime[k]) { // Vehicle shows up before attack
-                        scheduleAt(startTime[k], attackEvent);
-                    } else if (simTime() > startTime[k] && simTime() < startTime[k] + duration[k]) { // Vehicle shows up during the attack
-                        scheduleAt(simTime()+0.0001, attackEvent);
-                    }
-                }
-                //if(!messagesEvent->isScheduled()) schedule();
-            }
-
-            break;
+        // Sending Message
+        // Checks if perform a flooding attack or not
+        if(attacking) {
+            Attacker* mod = dynamic_cast<Attacker*>(getSystemModule()->getSubmodule("attacker"));
+            // Source address will be spoofed on switch module
+            destinationId = mod->getVictimId();
+            repeat = burstSize * mod->getAttackSize();
+        } else {
+            destinationId = getRandomVehicle()->getIndex();
+            repeat = burstSize;
         }
+
+        for(int i = 0; i < repeat; i++) {
+            packet = new AppMessage();
+            packet->setSourceAddress(vehicleId);
+            packet->setDestinationAddress(destinationId);
+            packet->setTTL(64);
+            packet->setId(msgSent);
+
+            // Payload
+            ss.clear();
+            ss << "PING Hello!";
+            packet->setPayload(ss.str().c_str());
+
+            // Sending message
+            EV_INFO << "Vehicle [" << vehicleId << "] Sending PING #" << msgSent <<" to Vehicle [" << destinationId << "]\n";
+            send(packet, toSwitch);
+
+            if(!attacking)
+                msgSent++;
+            else
+                attackSent++;
+        }
+        if(!attacking) recordV(); // Do not register while attacking
+        scheduleAt(simTime() + burstInterval, messagesEvent);
+
     } else if (msg->getArrivalGateId() == fromSwitch) {
         // Message received from switch.
         AppMessage* packet = (AppMessage*) msg;
@@ -197,10 +105,6 @@ void SdvnPing::handleMessage(cMessage *msg) {
     }
 }
 
-void SdvnPing::schedule() {
-    scheduleAt(simTime() + burstInterval, messagesEvent);
-}
-
 cModule* SdvnPing::getRandomVehicle() {
     auto map = TraCIScenarioManagerAccess().get()->getManagedHosts();
     auto iter = map.begin();
@@ -222,22 +126,9 @@ void SdvnPing::finish() {
         delete messagesEvent;
     }
 
-    if(attacker) {
-        recordScalar("Attacker", true);
-        recordScalar("Spoofed Packets Sent", floodingPkt);
-        if(attackEvent->isScheduled()) {
-            cancelAndDelete(attackEvent);
-        } else {
-            delete attackEvent;
-        }
+    if(attackSent > 0) {
+        recordScalar("Spoofed Packets Sent", attackSent);
     }
-
-    // Sending victims IDs to controller
-    // for statistics purposes
-    SdvnController* c = dynamic_cast<SdvnController*>(getSystemModule()->getSubmodule("controller"));
-    if(c->real.empty())
-        for(auto v : victims)
-            c->real.push_back(v);
 
     recordScalar("Messages Sent", msgSent);
     recordScalar("Messages Received", msgRecv);

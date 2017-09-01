@@ -83,6 +83,10 @@ void SdvnMobility::updateDisplayString() {
     }*/
 }
 
+simtime_t SdvnMobility::getTotalTime() {
+    return statistics.totalTime;
+}
+
 void SdvnMobility::finish() {
     TraCIMobility::finish();
 }

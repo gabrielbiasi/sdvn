@@ -39,6 +39,7 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 # Object files for local .cc, .msg and .sm files
 OBJS = \
     $O/application/SdvnPing.o \
+    $O/modules/Attacker.o \
     $O/modules/LteBase.o \
     $O/modules/SdvnController.o \
     $O/modules/SdvnMobility.o \
@@ -158,20 +159,30 @@ $O/application/SdvnPing.o: application/SdvnPing.cc \
 	messages/AppMessage_m.h \
 	messages/ControllerMessage_m.h \
 	messages/NeighborMessage_m.h \
+	modules/Attacker.h \
 	modules/SdvnController.h \
+	modules/SdvnMobility.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/NicEntry.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseBattery.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseMobility.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseModule.h \
 	$(VEINS_PROJ)/src/veins/base/modules/BaseWorldUtility.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BatteryAccess.h \
 	$(VEINS_PROJ)/src/veins/base/utils/Coord.h \
 	$(VEINS_PROJ)/src/veins/base/utils/FWMath.h \
 	$(VEINS_PROJ)/src/veins/base/utils/FindModule.h \
+	$(VEINS_PROJ)/src/veins/base/utils/HostState.h \
 	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
+	$(VEINS_PROJ)/src/veins/base/utils/Move.h \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
 	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIBuffer.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIColor.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICommandInterface.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIConnection.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICoord.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIMobility.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIScenarioManager.h \
 	$(VEINS_PROJ)/src/veins/modules/obstacle/Obstacle.h \
 	$(VEINS_PROJ)/src/veins/modules/obstacle/ObstacleControl.h \
@@ -197,6 +208,40 @@ $O/messages/NeighborMessage_m.o: messages/NeighborMessage_m.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
 	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h
+$O/modules/Attacker.o: modules/Attacker.cc \
+	SdvnTypes.h \
+	application/SdvnPing.h \
+	messages/AppMessage_m.h \
+	messages/ControllerMessage_m.h \
+	messages/NeighborMessage_m.h \
+	modules/Attacker.h \
+	modules/SdvnController.h \
+	modules/SdvnMobility.h \
+	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
+	$(VEINS_PROJ)/src/veins/base/connectionManager/NicEntry.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseBattery.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseMobility.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseModule.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BaseWorldUtility.h \
+	$(VEINS_PROJ)/src/veins/base/modules/BatteryAccess.h \
+	$(VEINS_PROJ)/src/veins/base/utils/Coord.h \
+	$(VEINS_PROJ)/src/veins/base/utils/FWMath.h \
+	$(VEINS_PROJ)/src/veins/base/utils/FindModule.h \
+	$(VEINS_PROJ)/src/veins/base/utils/HostState.h \
+	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
+	$(VEINS_PROJ)/src/veins/base/utils/Move.h \
+	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
+	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIBuffer.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIColor.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICommandInterface.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIConnection.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICoord.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIMobility.h \
+	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIScenarioManager.h \
+	$(VEINS_PROJ)/src/veins/modules/obstacle/Obstacle.h \
+	$(VEINS_PROJ)/src/veins/modules/obstacle/ObstacleControl.h \
+	$(VEINS_PROJ)/src/veins/modules/world/annotations/AnnotationManager.h
 $O/modules/LteBase.o: modules/LteBase.cc \
 	messages/ControllerMessage_m.h \
 	modules/LteBase.h \
@@ -228,12 +273,6 @@ $O/modules/SdvnController.o: modules/SdvnController.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
 	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h
 $O/modules/SdvnMobility.o: modules/SdvnMobility.cc \
-	SdvnTypes.h \
-	application/SdvnPing.h \
-	messages/AppMessage_m.h \
-	messages/ControllerMessage_m.h \
-	messages/NeighborMessage_m.h \
-	modules/SdvnController.h \
 	modules/SdvnMobility.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/NicEntry.h \
@@ -249,7 +288,6 @@ $O/modules/SdvnMobility.o: modules/SdvnMobility.cc \
 	$(VEINS_PROJ)/src/veins/base/utils/MiXiMDefs.h \
 	$(VEINS_PROJ)/src/veins/base/utils/Move.h \
 	$(VEINS_PROJ)/src/veins/base/utils/miximkerneldefs.h \
-	$(VEINS_PROJ)/src/veins/modules/messages/WaveShortMessage_m.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIBuffer.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCIColor.h \
 	$(VEINS_PROJ)/src/veins/modules/mobility/traci/TraCICommandInterface.h \
@@ -266,7 +304,9 @@ $O/modules/SdvnSwitch.o: modules/SdvnSwitch.cc \
 	messages/AppMessage_m.h \
 	messages/ControllerMessage_m.h \
 	messages/NeighborMessage_m.h \
+	modules/Attacker.h \
 	modules/SdvnController.h \
+	modules/SdvnMobility.h \
 	modules/SdvnSwitch.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/BaseConnectionManager.h \
 	$(VEINS_PROJ)/src/veins/base/connectionManager/ChannelAccess.h \

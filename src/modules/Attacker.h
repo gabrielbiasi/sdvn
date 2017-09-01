@@ -13,59 +13,49 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef __SDVN_SDVNPING_H_
-#define __SDVN_SDVNPING_H_
+#ifndef __SDVN_ATTACKER_H_
+#define __SDVN_ATTACKER_H_
 
 #include <omnetpp.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "SdvnTypes.h"
-#include "messages/AppMessage_m.h"
-#include "modules/SdvnController.h"
-#include "modules/Attacker.h"
 #include "veins/modules/mobility/traci/TraCIScenarioManager.h"
+#include "modules/SdvnMobility.h"
+#include "application/SdvnPing.h"
+#include "SdvnTypes.h"
 
 using namespace omnetpp;
-using Veins::TraCIScenarioManagerAccess;
-
-using std::string;
+using std::cout;
 using std::vector;
 using std::advance;
-using std::stringstream;
+using Veins::TraCIScenarioManagerAccess;
 
-class SdvnPing : public cSimpleModule
+class Attacker : public cSimpleModule
 {
   protected:
-    // Gates
-    int toSwitch;
-    int fromSwitch;
+    long numVictims;
+    double victimWarmUp;
+    vector<long> victims;
 
-    long vehicleId;
-    double burstSize;
-    double burstInterval;
-    double warmUp;
+    double attackerRate;
+    double attackScale;
 
-    int msgSent;
-    int msgRecv;
+    double startTime;
+    double duration;
+    double checkInterval;
 
-    cOutVector vMsgRate;
-    cOutVector vLatency;
+    cMessage* check;
 
-    cMessage* messagesEvent;
-
-    virtual void initialize(int stage);
+    virtual void initialize();
     virtual void handleMessage(cMessage *msg);
     virtual void finish();
-    void recordV();
 
-    cModule* getRandomVehicle();
+    void checkAttackers();
+    bool alreadyVictim(long vehicleId);
+    void selectNewVictim();
+    void stopAttacks();
 
   public:
-
-    // Attacks Settings
-    bool attacking;
-    long attackSent;
+    long getVictimId();
+    double getAttackSize();
 };
 
 #endif
