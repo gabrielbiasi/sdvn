@@ -50,13 +50,14 @@ class Attacker : public cSimpleModule
     virtual void finish();
 
     void checkAttackers();
-    bool alreadyVictim(long vehicleId);
+
     void selectNewVictim();
     void stopAttacks();
 
   public:
     long getVictimId();
     double getAttackSize();
+    bool alreadyVictim(long vehicleId);
 };
 
 #endif

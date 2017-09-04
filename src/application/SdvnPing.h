@@ -31,6 +31,7 @@ using Veins::TraCIScenarioManagerAccess;
 
 using std::string;
 using std::vector;
+using std::find;
 using std::advance;
 using std::stringstream;
 

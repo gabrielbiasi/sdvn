@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+	<basedir path="C:\omnetpp-5.0\workspace\sdvn\simulations\maps\cg"/>
+	<copy file="cg.net.xml" />
+	<copy file="cg.rou.250.xml" />
+	<copy file="cg.250.sumo.cfg" type="config" />
+</launch>
+

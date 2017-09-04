@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scave:Analysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:scave="http://www.omnetpp.org/omnetpp/scave">
+  <inputs>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Sentinel-*.sca"/>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Sentinel-*.vec"/>
+  </inputs>
+  <datasets>
+    <datasets name="Dataset">
+      <items xsi:type="scave:Group" name="Mitigation">
+        <items xsi:type="scave:Add" filterPattern="name(&quot;Dropped by Sentinel&quot;)"/>
+        <items xsi:type="scave:Add" filterPattern="name(&quot;Spoofed Packets Sent&quot;)"/>
+        <items xsi:type="scave:ComputeScalar" scalarName="AllPktDropped" valueExpr="sum('Dropped by Sentinel')" moduleExpr="Sum" groupByExpr="run"/>
+        <items xsi:type="scave:ComputeScalar" scalarName="AllPktGenerated" valueExpr="sum('Spoofed Packets Sent')" moduleExpr="Sum" groupByExpr="run"/>
+        <items xsi:type="scave:ComputeScalar" scalarName="SentinelRate" valueExpr="100*('AllPktDropped'/'AllPktGenerated')" moduleExpr="Sum" groupByExpr="run"/>
+        <items xsi:type="scave:Discard" filterPattern="NOT(SentinelRate)"/>
+        <items xsi:type="scave:BarChart" name="Attack Rate Mitigated"/>
+      </items>
+      <items xsi:type="scave:Group" name="Mitigation2">
+        <items xsi:type="scave:Add" filterPattern="name(&quot;Spoofed Packets Received&quot;)"/>
+        <items xsi:type="scave:Add" filterPattern="name(&quot;Spoofed Packets Sent&quot;)"/>
+        <items xsi:type="scave:ComputeScalar" scalarName="AllPktReceived" valueExpr="sum('Spoofed Packets Received')" moduleExpr="Sum" groupByExpr="run"/>
+        <items xsi:type="scave:ComputeScalar" scalarName="AllPktGenerated" valueExpr="sum('Spoofed Packets Sent')" moduleExpr="Sum" groupByExpr="run"/>
+        <items xsi:type="scave:ComputeScalar" scalarName="VictimRate" valueExpr="100*('AllPktReceived'/'AllPktGenerated')" moduleExpr="Sum" groupByExpr="run"/>
+        <items xsi:type="scave:Discard" filterPattern="NOT (VictimRate)"/>
+        <items xsi:type="scave:BarChart" name="Attack Rate reached Victim"/>
+      </items>
+    </datasets>
+  </datasets>
+  <chartSheets>
+    <chartSheets name="default" charts="//@datasets/@datasets.0/@items.0/@items.6 //@datasets/@datasets.0/@items.1/@items.6"/>
+  </chartSheets>
+</scave:Analysis>

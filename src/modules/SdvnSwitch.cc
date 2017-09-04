@@ -156,9 +156,8 @@ void SdvnSwitch::onData(WaveShortMessage* wsm) {
                 // But if this message come from another vehicle, drop.
                 if(packet->getSourceAddress() != myId) {
                     EV_INFO << "Vehicle [" << myId << "] Attacker DROP!";
-                    delete packet;
                     droppedBySentinel++;
-                    numPackets++;
+                    delete packet;
                     return;
                 }
             case FORWARD:

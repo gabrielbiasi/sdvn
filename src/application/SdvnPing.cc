@@ -29,6 +29,9 @@ void SdvnPing::initialize(int stage) {
 }
 
 void SdvnPing::handleMessage(cMessage *msg) {
+    Attacker* mod = dynamic_cast<Attacker*>(getSystemModule()->getSubmodule("attacker"));
+    SdvnController* ctrl = dynamic_cast<SdvnController*>(getSystemModule()->getSubmodule("controller"));
+
     if(msg->isSelfMessage()) {
         AppMessage* packet;
         stringstream ss;
@@ -37,7 +40,6 @@ void SdvnPing::handleMessage(cMessage *msg) {
         // Sending Message
         // Checks if perform a flooding attack or not
         if(attacking) {
-            Attacker* mod = dynamic_cast<Attacker*>(getSystemModule()->getSubmodule("attacker"));
             // Source address will be spoofed on switch module
             destinationId = mod->getVictimId();
             repeat = burstSize * mod->getAttackSize();
@@ -62,10 +64,13 @@ void SdvnPing::handleMessage(cMessage *msg) {
             EV_INFO << "Vehicle [" << vehicleId << "] Sending PING #" << msgSent <<" to Vehicle [" << destinationId << "]\n";
             send(packet, toSwitch);
 
-            if(!attacking)
+            if(attacking) {
+                auto victim = find(ctrl->confirmed.begin(),ctrl->confirmed.end(), mod->getVictimId());
+                // only counts if the sentinel already knows about the attack
+                if(victim != ctrl->confirmed.end()) attackSent++;
+            } else {
                 msgSent++;
-            else
-                attackSent++;
+            }
         }
         if(!attacking) recordV(); // Do not register while attacking
         scheduleAt(simTime() + burstInterval, messagesEvent);
