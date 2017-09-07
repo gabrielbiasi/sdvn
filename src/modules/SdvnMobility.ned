@@ -16,10 +16,9 @@
 package sdvn.modules;
 import org.car2x.veins.modules.mobility.traci.TraCIMobility;
 
-simple SdvnMobility extends TraCIMobility
-{
+simple SdvnMobility extends TraCIMobility {
     parameters:
         @class(SdvnMobility);
         @display("i=block/wheelbarrow");
-
+        double speed = default(20);
 }

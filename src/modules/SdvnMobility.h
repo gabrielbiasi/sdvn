@@ -17,9 +17,13 @@
 #define MODULES_SDVNMOBILITY_H_
 
 #include <TraCIMobility.h>
+using Veins::TraCICommandInterface;
 
 class SdvnMobility: public Veins::TraCIMobility {
 protected:
+    double speed;
+    TraCICommandInterface::Vehicle* traciVehicle;
+
     virtual void initialize(int stage);
     virtual void updateDisplayString();
     virtual void finish();

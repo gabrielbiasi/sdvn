@@ -1,7 +1,8 @@
 package sdvn.nodes;
 
 import sdvn.modules.SdvnSwitch;
-import sdvn.application.*;
+import sdvn.modules.SdvnMobility;
+import sdvn.application.SdvnPing;
 import org.car2x.veins.base.modules.*;
 import org.car2x.veins.modules.nic.Nic80211p;
 
@@ -10,7 +11,7 @@ module Car
     parameters:
         @display("bgb=238,255");
         string nicType = default("Nic80211p");
-        string veinsmobilityType;
+        string mobilityType = default("SdvnMobility");
     gates:
         input veinsradioIn;
 
@@ -27,7 +28,7 @@ module Car
             parameters:
                 @display("p=112,127;i=block/fork");
         }
-        veinsmobility: <veinsmobilityType> like org.car2x.veins.base.modules.IMobility {
+        mobility: <mobilityType> like org.car2x.veins.base.modules.IMobility {
             parameters:
                 @display("p=44,127;i=block/cogwheel");
         }

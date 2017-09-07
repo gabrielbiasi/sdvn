@@ -23,6 +23,8 @@ network Sdvn
         double worldPosY;
         double managerPosX;
         double managerPosY;
+        double attackerPosX;
+        double attackerPosY;
 
         double playgroundSizeX @unit(m);
         double playgroundSizeY @unit(m);
@@ -39,7 +41,7 @@ network Sdvn
     submodules:
         rsu[numRsu]: <rsuType> like IRsu;
         attacker: Attacker {
-            @display("i=old/telnet;is=s");
+            @display("p=$attackerPosX,$attackerPosY;i=block/broadcast;is=s");
         }
         obstacles: ObstacleControl {
             @display("p=$obstaclesPosX,$obstaclesPosY;i=misc/town;is=s");

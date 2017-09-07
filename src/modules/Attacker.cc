@@ -114,7 +114,7 @@ void Attacker::selectNewVictim() {
         auto iter = vehicles.begin();
         advance(iter, intuniform(0, vehicles.size()-1));
         SdvnPing* appl = dynamic_cast<SdvnPing*>(iter->second->getSubmodule("appl"));
-        SdvnMobility* mobility = dynamic_cast<SdvnMobility*>(iter->second->getSubmodule("veinsmobility"));
+        SdvnMobility* mobility = dynamic_cast<SdvnMobility*>(iter->second->getSubmodule("mobility"));
         vehicleId = iter->second->getIndex();
         if(mobility->getTotalTime() >= victimWarmUp // old enough
                 && mobility->getTotalTime() < 2*victimWarmUp // fresh enough
@@ -155,9 +155,10 @@ void Attacker::finish() {
         delete check;
     }
 
+    if(numVictims == 0) return;
+
     TP = FN = FP = TN = 0;
     SdvnController* controller = dynamic_cast<SdvnController*>(getSystemModule()->getSubmodule("controller"));
-
     if(!controller->sentinel) {
         std::cout << "Victims: [";
         for(auto v : victims) std::cout << v << ", ";
