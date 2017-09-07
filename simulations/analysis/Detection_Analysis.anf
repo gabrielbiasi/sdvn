@@ -3,6 +3,12 @@
   <inputs>
     <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-0.sca"/>
     <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-0.vec"/>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-0.sca"/>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-0.vec"/>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-1.sca"/>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-1.vec"/>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-2.sca"/>
+    <inputs name="/sdvn/simulations/results/Synthetic_Centralized_Normal-2.vec"/>
   </inputs>
   <datasets>
     <datasets name="Dataset">
@@ -15,6 +21,7 @@
         <items xsi:type="scave:BarChart" name="Detection Rate Chart"/>
       </items>
     </datasets>
+    <datasets name="test"/>
   </datasets>
   <chartSheets>
     <chartSheets name="default" charts="//@datasets/@datasets.0/@items.1/@items.1 //@datasets/@datasets.0/@items.0/@items.1"/>

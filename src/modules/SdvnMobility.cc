@@ -22,8 +22,8 @@ void SdvnMobility::initialize(int stage) {
     traciVehicle = getVehicleCommandInterface();
 
     speed = par("speed").doubleValue();
-    EV_INFO << "[" << getSpeed() << "]" << endl;
-    //traciVehicle->setSpeed(speed);
+    // setting custom speed
+    traciVehicle->setSpeed(speed);
 }
 
 void SdvnMobility::updateDisplayString() {

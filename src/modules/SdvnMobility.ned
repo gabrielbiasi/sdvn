@@ -20,5 +20,5 @@ simple SdvnMobility extends TraCIMobility {
     parameters:
         @class(SdvnMobility);
         @display("i=block/wheelbarrow");
-        double speed = default(20);
+        double speed = default(14);
 }
